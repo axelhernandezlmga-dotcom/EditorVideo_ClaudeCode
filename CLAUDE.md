@@ -21,6 +21,19 @@ subtítulos, imágenes reales, música y efectos. Interfaz web local en español
 - `prompts/` instrucciones de Claude: `guionista.md`, `material.md`, `tonos/` (solo `academico.md`), `modos/`.
 - Claude se llama con `claude -p` y salida estructurada (`src/pipeline/claude.ts`): usa la sesión de Claude Code.
 
+## Biblioteca, análisis y memes
+- `src/pipeline/biblioteca.ts` (índice v2, se migra al leerlo), `analisis.ts` (fase local con
+  `crudo/transcribir_lote.py` y fase Claude por lotes de 6; reanudable), `seleccionClips.ts` (candidatos por
+  contexto con `src/shared/busqueda.ts`, un índice BM25 local; reglas de audio y frecuencia).
+- Audio de los clips: `cortarClip(..., { conAudio })` nivela a -16 LUFS. Crudos: la voz y la música bajan con
+  `curvaDucking` (`src/shared/musica.ts`). Animados: `pasos/memes.ts` elige memes; con audio, la escena se alarga y el
+  meme entra después de la narración (`render.ts`, `Escena.tsx`).
+- Nunca lances la fase Claude de muchos clips sin que el usuario lo autorice (usa su cuenta).
+
+## Publicar
+`npm run publicar` (ver `scripts/publicar.ts`): tests, exportación con `git archive`, auditoría de privados y licencias,
+commit como Accelerandes con `-c user.name` (sin coautores) y push sin force.
+
 ## Modos de edición
 `normal`, `graficos`, `situacional`, `imagenes` (`src/shared/modos.ts`). Cambian las instrucciones
 (`prompts/modos/<id>.md` y `<id>.crudo.md`), las plantillas permitidas, la cantidad de ilustración y la densidad de

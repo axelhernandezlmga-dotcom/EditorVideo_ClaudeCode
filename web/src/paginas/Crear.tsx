@@ -29,7 +29,7 @@ export const Crear: React.FC = () => {
   const [cantidad, setCantidad] = useState<NonNullable<PedidoVideo["cantidadIlustracion"]>>("media");
   const [opinion, setOpinion] = useState("");
   const [modoEdicion, setModoEdicion] = useState<ModoEdicion>("normal");
-  const [biblioteca, setBiblioteca] = useState<UsoBiblioteca>({ modo: "no", categorias: [], elegidos: [] });
+  const [biblioteca, setBiblioteca] = useState<UsoBiblioteca>({ modo: "no", categorias: [], elegidos: [], audio: "auto", frecuencia: "media" });
   const [creando, setCreando] = useState(false);
   const [tema, setTema] = useState("");
   const [ideas, setIdeas] = useState<Idea[] | null>(null);

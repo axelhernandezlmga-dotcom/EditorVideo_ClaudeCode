@@ -60,6 +60,26 @@ export const RecursoSchema = z.object({
   etiquetas: EtiquetasClipSchema.prefault({}),
   /** "claude" = la escribió Claude mirando 3 fotogramas; "manual" = la editaste vos; "nombre" = sale del nombre del archivo. */
   descripcionPor: z.enum(["claude", "manual", "nombre", "ninguna"]).default("ninguna"),
+  /** Análisis (v1.1): en qué situaciones sirve el clip, categorías semánticas, tono y por qué es gracioso. */
+  usos: z.array(z.string().max(160)).max(8).default([]),
+  semantica: z.array(z.string().max(40)).max(12).default([]),
+  tono: z.string().max(80).default(""),
+  humor: z.string().max(240).default(""),
+  /** El clip pierde su gracia sin su audio (una frase, un grito, un efecto): en "Automático" suena. */
+  audioClave: z.boolean().default(false),
+  /** Idioma de lo que se dice (lo detecta whisper) y volumen medio del audio (dB; null = sin medir). */
+  idioma: z.string().max(8).nullable().default(null),
+  volumenDb: z.number().nullable().default(null),
+  /** Qué fases del análisis ya se hicieron (fecha ISO), para reanudar sin repetir. */
+  analisis: z
+    .object({
+      /** Local y gratis: fotogramas, volumen y transcripción. */
+      local: z.string().nullable().default(null),
+      /** Claude mirando los fotogramas. */
+      claude: z.string().nullable().default(null),
+      error: z.string().nullable().default(null),
+    })
+    .prefault({}),
   /** Música: ánimo para la elección automática. */
   mood: z.enum(IDS_MOODS).nullable().default(null),
   bytes: z.number(),
@@ -69,8 +89,10 @@ export const RecursoSchema = z.object({
 });
 export type Recurso = z.infer<typeof RecursoSchema>;
 
+/** Versión del índice: la 2 (v1.1) suma el análisis de cada clip. Las anteriores se migran al leerlas. */
+export const VERSION_BIBLIOTECA = 2;
 export const BibliotecaSchema = z.object({
-  version: z.literal(1).default(1),
+  version: z.number().int().default(VERSION_BIBLIOTECA),
   categorias: z.array(CategoriaSchema).default([]),
   recursos: z.array(RecursoSchema).default([]),
 });
@@ -97,8 +119,14 @@ const sinTildes = (s: string) =>
     .replace(/[̀-ͯ]/g, "");
 
 /** Texto para buscar un recurso (nombre, descripción, etiquetas, transcripción y de dónde vino), sin tildes. */
-export const textoBusqueda = (r: Pick<Recurso, "nombre" | "origen" | "descripcion" | "transcripcion" | "etiquetas">) =>
-  sinTildes([r.nombre, r.origen, r.descripcion, r.transcripcion ?? "", ...Object.values(r.etiquetas).flat()].join(" "));
+export const textoBusqueda = (r: Pick<Recurso, "nombre" | "origen" | "descripcion" | "transcripcion" | "etiquetas"> & Partial<Pick<Recurso, "usos" | "semantica" | "tono" | "humor">>) =>
+  sinTildes([r.nombre, r.origen, r.descripcion, r.transcripcion ?? "", ...Object.values(r.etiquetas).flat(), ...(r.usos ?? []), ...(r.semantica ?? []), r.tono ?? "", r.humor ?? ""].join(" "));
+
+/** Campos del análisis de un recurso recién importado (todavía sin analizar). */
+export const analisisVacio = () => ({ usos: [], semantica: [], tono: "", humor: "", audioClave: false, idioma: null, volumenDb: null, analisis: { local: null, claude: null, error: null } });
+
+/** ¿El audio del clip vale la pena (no es silencio ni un zumbido muy bajo)? Sin medir, se confía en que tiene audio. */
+export const tieneAudioUtil = (r: Pick<Recurso, "audio" | "volumenDb">) => r.audio && (r.volumenDb === null || r.volumenDb > -45);
 
 /** ¿El recurso coincide con todas las palabras buscadas? */
 export const coincideBusqueda = (r: Parameters<typeof textoBusqueda>[0], consulta: string) => {
@@ -109,27 +137,6 @@ export const coincideBusqueda = (r: Parameters<typeof textoBusqueda>[0], consult
     .every((p) => texto.includes(p));
 };
 
-/** Palabras con contenido (para medir qué tan relacionado está un clip con un texto). */
-export const palabrasClave = (s: string) => new Set(sinTildes(s).split(/[^a-z0-9ñ]+/).filter((w) => w.length > 3));
-
-/**
- * Los clips más relacionados con un texto (guion o transcripción): puntaje por palabras en común. Sirve para
- * no mandarle a Claude un catálogo de miles de clips; si el catálogo es chico, van todos.
- */
-export const clipsRelacionados = <T extends Recurso>(clips: T[], texto: string, max = 120): T[] => {
-  if (clips.length <= max) return clips;
-  const claves = palabrasClave(texto);
-  const puntaje = (c: T) => {
-    let n = 0;
-    for (const w of palabrasClave(textoBusqueda(c))) if (claves.has(w)) n++;
-    return n;
-  };
-  return clips
-    .map((c, i) => ({ c, p: puntaje(c), i }))
-    .sort((a, b) => b.p - a.p || a.i - b.i)
-    .slice(0, max)
-    .map((x) => x.c);
-};
 
 /** Qué categorías se usan en un video: con la lista vacía, todas. */
 export const enCategorias = (r: Pick<Recurso, "categoria">, categorias: string[]) => !categorias.length || categorias.includes(r.categoria);

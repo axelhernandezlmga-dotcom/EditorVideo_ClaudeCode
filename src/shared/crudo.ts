@@ -129,7 +129,7 @@ export type MaterialRender =
       proporcion: number | null;
     }
   | { tipo: "imagen"; desdeMs: number; hastaMs: number; imagen: string; credito: string | null; etiqueta: string | null; marco?: MarcoFoto }
-  | { tipo: "clip"; desdeMs: number; hastaMs: number; video: string }
+  | { tipo: "clip"; desdeMs: number; hastaMs: number; video: string; conAudio?: boolean }
   | { tipo: "tarjeta"; desdeMs: number; hastaMs: number; titulo: string; texto: string | null }
   | { tipo: "plantilla"; desdeMs: number; hastaMs: number; plantilla: PlantillaMaterial; props: Record<string, unknown> };
 

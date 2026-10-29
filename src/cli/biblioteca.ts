@@ -1,13 +1,17 @@
-import { crearCategoria, describirClips, descripcion, importacion, importarCarpeta, leerBiblioteca } from "../pipeline/biblioteca";
+import { analisis, analizarClips, CLIPS_POR_PEDIDO, pendientesAnalisis } from "../pipeline/analisis";
+import { crearCategoria, importacion, importarCarpeta, leerBiblioteca } from "../pipeline/biblioteca";
 import { colores as c, parsearArgs } from "./comun";
 
 const AYUDA = `Uso:
   npm run biblioteca                                        lista categorías y cuántos archivos tiene cada una
-  npm run biblioteca -- importar <carpeta> --categoria "Memes varios" [--describir] [--transcribir] [--audio musica|sfx]
-  npm run biblioteca -- describir --categoria "Memes varios" [--transcribir]
+  npm run biblioteca -- importar <carpeta> --categoria "Memes varios" [--audio musica|sfx]
+  npm run biblioteca -- analizar --categoria "Memes varios"                     fase local (gratis)
+  npm run biblioteca -- analizar --categoria "Memes varios" --claude [--limite 12] [--si]
 
 La categoría se crea si no existe. Los archivos se COPIAN a biblioteca/medios/ (el original no se toca) y
-los repetidos se saltean. --describir hace que Claude mire cada clip (un pedido por clip).`;
+los repetidos se saltean. El análisis se reanuda: nunca repite un clip ya analizado. La fase local (fotogramas,
+volumen y transcripción con faster-whisper) es gratis; la de Claude usa tu cuenta (un pedido cada 6 clips) y
+sin --si solo muestra cuántos pedidos haría.`;
 
 const esperar = async (estado: { activa: boolean; hechos: number; total: number }, texto: () => string) => {
   let ultimo = -1;
@@ -47,7 +51,7 @@ const main = async () => {
   if (accion === "importar") {
     if (!carpeta) throw new Error(`Falta la carpeta.\n\n${AYUDA}`);
     const tipoAudio = flags.audio === "musica" || flags.audio === "sfx" ? flags.audio : "auto";
-    await importarCarpeta(carpeta, { categoria: categoria.id, describir: Boolean(flags.describir), transcribir: Boolean(flags.transcribir), tipoAudio });
+    await importarCarpeta(carpeta, { categoria: categoria.id, tipoAudio });
     console.log(`Importando ${importacion.total} archivos a «${categoria.nombre}»…`);
     await esperar(importacion, () => `${importacion.hechos} de ${importacion.total} (${importacion.importados} nuevos, ${importacion.duplicados} repetidos, ${importacion.errores.length} con error)`);
     console.log(c.verde(`✓ ${importacion.importados} importados, ${importacion.duplicados} repetidos salteados.`));
@@ -55,14 +59,22 @@ const main = async () => {
     return;
   }
 
-  if (accion === "describir") {
-    const b = await leerBiblioteca();
-    const ids = b.recursos.filter((r) => r.tipo === "video" && r.categoria === categoria.id && r.descripcionPor === "nombre").map((r) => r.id);
-    await describirClips(ids, { transcribir: Boolean(flags.transcribir) });
-    console.log(`Describiendo ${descripcion.total} clips de «${categoria.nombre}» con Claude…`);
-    await esperar(descripcion, () => `${descripcion.hechos} de ${descripcion.total}`);
-    if (descripcion.error) console.log(c.amarillo(`  ⚠ ${descripcion.error}`));
-    console.log(c.verde("✓ Listo."));
+  if (accion === "analizar") {
+    const fase = flags.claude ? "claude" : "local";
+    const p = (await pendientesAnalisis())[categoria.id]!;
+    const limite = typeof flags.limite === "string" ? Number(flags.limite) : undefined;
+    if (fase === "claude" && !flags.si) {
+      const n = Math.min(limite ?? p.claude, p.claude);
+      console.log(`Faltan ${p.claude} clips por analizar con Claude en «${categoria.nombre}». Esta corrida haría ${n} (≈ ${Math.ceil(n / CLIPS_POR_PEDIDO)} pedidos a Claude con tu cuenta).`);
+      console.log("Para hacerlo, agregá --si (y --limite N para probar con pocos).");
+      return;
+    }
+    await analizarClips({ fase, categoria: categoria.id, limite });
+    console.log(`Analizando ${analisis.total} clips de «${categoria.nombre}» (${fase === "local" ? "fase local: fotogramas, volumen y transcripción" : "con Claude"})…`);
+    await esperar(analisis, () => `${analisis.hechos} de ${analisis.total}${fase === "claude" ? ` · ${analisis.pedidos} pedidos` : ""} · ${analisis.errores.length} con error`);
+    for (const e of analisis.errores.slice(0, 20)) console.log(c.amarillo(`  ⚠ ${e.nombre}: ${e.error}`));
+    const q = (await pendientesAnalisis())[categoria.id]!;
+    console.log(c.verde(`✓ Listo. Pendientes en «${categoria.nombre}»: ${q.local} sin fase local, ${q.claude} sin analizar con Claude.`));
     return;
   }
 

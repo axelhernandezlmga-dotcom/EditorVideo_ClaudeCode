@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { Audio } from "@remotion/media";
 import { Sequence, useVideoConfig } from "remotion";
 import type { EscenaRender } from "../../shared/render";
-import { curvaMusica } from "../../shared/musica";
+import { curvaDucking, curvaMusica, DUCKING_CLIP } from "../../shared/musica";
 import { iniciosEscenas } from "../../shared/render";
 import { transicion } from "../transiciones";
 
@@ -15,9 +15,22 @@ const intervalosHabla = (escenas: EscenaRender[], fps: number) => {
   });
 };
 
+/** Cuándo suena el audio original de un meme (ms del video). */
+export const intervalosMemes = (escenas: EscenaRender[], fps: number, desplazamiento = 0) => {
+  const inicios = iniciosEscenas(escenas.map((e) => e.duracionFrames));
+  return escenas.flatMap((e, i) =>
+    e.meme?.conAudio ? [{ desdeMs: (((inicios[i] ?? 0) + desplazamiento + e.meme.desdeFrame) / fps) * 1000, hastaMs: (((inicios[i] ?? 0) + desplazamiento + e.meme.desdeFrame + e.meme.duracionFrames) / fps) * 1000 }] : [],
+  );
+};
+
 export const Musica: React.FC<{ src: string; volumen: number; escenas: EscenaRender[] }> = ({ src, volumen, escenas }) => {
   const { durationInFrames, fps } = useVideoConfig();
-  const curva = useMemo(() => curvaMusica(intervalosHabla(escenas, fps), durationInFrames, fps, volumen), [escenas, durationInFrames, fps, volumen]);
+  // baja cuando habla la voz y más todavía cuando suena un meme
+  const curva = useMemo(() => {
+    const base = curvaMusica(intervalosHabla(escenas, fps), durationInFrames, fps, volumen);
+    const duck = curvaDucking(intervalosMemes(escenas, fps), durationInFrames, fps, DUCKING_CLIP.musica);
+    return base.map((v, f) => v * (duck[f] ?? 1));
+  }, [escenas, durationInFrames, fps, volumen]);
   return (
     <Audio
       name="Música"

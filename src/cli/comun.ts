@@ -38,7 +38,7 @@ export const parsearArgs = (argv: string[]) => {
       const [k, v] = a.slice(2).split("=", 2) as [string, string | undefined];
       const sig = argv[i + 1];
       if (v !== undefined) flags[k] = v;
-      else if (sig !== undefined && !sig.startsWith("--") && ["voz", "reanudar", "aprobar", "tema", "cantidad", "solo", "trabajo", "modelo", "prueba", "estilo", "hoja", "perfil", "categoria", "audio", "carpeta", "nombre", "usuario", "slug"].includes(k)) {
+      else if (sig !== undefined && !sig.startsWith("--") && ["voz", "reanudar", "aprobar", "tema", "cantidad", "solo", "trabajo", "modelo", "prueba", "estilo", "hoja", "perfil", "categoria", "audio", "limite", "carpeta", "nombre", "usuario", "slug"].includes(k)) {
         flags[k] = sig;
         i++;
       } else flags[k] = true;

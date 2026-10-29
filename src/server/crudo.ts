@@ -252,8 +252,9 @@ export const registrarCrudo = async (app: FastifyInstance) => {
       await actualizarItem(t, req.params.mid, async (it) => {
         if (!it.clip) throw new Error("Ese material no es un clip.");
         const dur = Math.min(it.clip.duracionS, c.duracion);
-        const { desde, dur: d } = await cortarClip(t, c, Math.max(0, (c.duracion - dur) / 2), dur, it.clip.archivo);
-        return { ...it, estado: "listo", clip: { id: c.id, ruta: c.archivo, nombre: c.nombre, desdeS: desde, duracionS: d, archivo: it.clip.archivo, motivo: "elegido a mano en la revisión" } };
+        // el clip nuevo suena si el anterior sonaba (y tiene audio)
+        const { desde, dur: d, conAudio } = await cortarClip(t, c, Math.max(0, (c.duracion - dur) / 2), dur, it.clip.archivo, { conAudio: it.clip.conAudio });
+        return { ...it, estado: "listo", clip: { id: c.id, ruta: c.archivo, nombre: c.nombre, desdeS: desde, duracionS: d, archivo: it.clip.archivo, motivo: "elegido a mano en la revisión", conAudio } };
       });
       return detalleCrudo(t);
     });

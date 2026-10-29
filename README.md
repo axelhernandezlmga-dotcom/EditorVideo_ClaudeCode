@@ -65,14 +65,22 @@ instalarlo. Si no, dentro de Claude Code:
 ## Biblioteca de clips y perfiles
 
 **Biblioteca** (menú superior): creá categorías y subí clips, música y efectos (archivos sueltos o una carpeta
-entera). Los archivos se copian a `biblioteca/` y los repetidos se detectan solos. También desde la terminal:
+entera). Los archivos se copian a `biblioteca/` y los repetidos se detectan solos. Después **analizalos** (panel
+«Análisis de clips»): la fase local es gratis (fotogramas, volumen y transcripción); la de Claude mira cada clip y
+anota qué pasa, el tono y en qué situaciones sirve (usa tu cuenta: un pedido cada 6 clips, se confirma antes). Se
+puede cortar y retomar. Desde la terminal:
 
 ```bash
-npm run biblioteca -- importar ~/Videos/mis-clips --categoria "Colorados"
+npm run biblioteca -- importar ~/Videos/mis-memes --categoria "Memes varios"
+npm run biblioteca -- analizar --categoria "Memes varios"             # fase local, gratis
+npm run biblioteca -- analizar --categoria "Memes varios" --claude    # muestra cuántos pedidos haría
 ```
 
-Al crear un video elegís **Incluir clips de la biblioteca: Sí / No** y de qué categorías. La biblioteca no se sube a
-git: cada persona carga su propio material (los clips de noticieros y memes suelen tener derechos de terceros).
+Al crear un video elegís **Incluir clips de la biblioteca: Sí / No**, de qué categorías, el **audio original de los
+clips** (Automático, Activado, Desactivado) y la **frecuencia de memes** (Baja, Media, Alta). El editor los elige por
+lo que pasa en cada clip y lo que se dice en el video; cuando un meme suena, la voz y la música bajan solas. La
+biblioteca no se sube a git: cada persona carga su propio material (los clips de noticieros y memes suelen tener
+derechos de terceros).
 
 **Perfiles** (Videos animados → Perfiles): cada perfil define el @, colores, tipografía, foto, subtítulos y kit de
 marca con que se firma el video. El repositorio trae un perfil predeterminado; los tuyos quedan solo en tu compu.
@@ -101,3 +109,13 @@ Carpeta con los recursos: [PEGAR AQUÍ LA RUTA DE MI CARPETA DE IDENTIDAD DE MAR
 ```
 
 El perfil queda en `config/perfiles/` y aparece en el selector de perfiles de la app.
+
+## Publicar una versión (para quien mantiene el proyecto)
+
+```bash
+npm run publicar -- --destino <carpeta del repo público> --mensaje "qué cambió"   # prepara el commit
+npm run publicar -- --subir                                                        # lo sube
+```
+
+Corre typecheck y tests, exporta solo lo que está en git, frena si encuentra datos privados, claves o medios sin
+licencia libre, y commitea como Accelerandes sin tocar tu configuración de git (nunca hace force-push).

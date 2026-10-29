@@ -1,7 +1,7 @@
 import { existsSync } from "node:fs";
 import { rename, rm } from "node:fs/promises";
 import { censurar, censurarProfundo } from "../../shared/censura";
-import { duracionEscenaFrames, type Animacion, type EscenaRender, type MarcaVisual, type PortadaProps, type VideoProps } from "../../shared/render";
+import { duracionEscenaFrames, FPS, FRAMES_TRANSICION, type Animacion, type EscenaRender, type MarcaVisual, type PortadaProps, type VideoProps } from "../../shared/render";
 import type { Guion, Marca, Voz } from "../../shared/schemas";
 import { renderizarPortada, renderizarVideo, servirCarpeta } from "../renderizador";
 import type { Trabajo } from "../trabajo";
@@ -19,9 +19,16 @@ export const armarProps = (guion: Guion, voz: Voz, visuales: Visuales, marca: Ma
     const a = voz.escenas[i];
     if (!a) throw new Error(`Falta el audio de la escena ${i + 1}`);
     const foto = visuales.fotos[i];
+    // un meme con audio entra en una pausa después de la narración: la escena se alarga lo que dura el meme
+    const meme = visuales.memes[i];
+    const framesVoz = duracionEscenaFrames(a.duracionMs);
+    const framesMeme = meme ? Math.round((meme.duracionMs / 1000) * FPS) : 0;
     const escena: EscenaRender = {
       ...e,
-      duracionFrames: duracionEscenaFrames(a.duracionMs),
+      duracionFrames: framesVoz + (meme?.conAudio ? framesMeme : 0),
+      ...(meme
+        ? { meme: { src: url(meme.archivo)!, conAudio: meme.conAudio, duracionFrames: framesMeme, desdeFrame: meme.conAudio ? Math.round((a.duracionMs / 1000) * FPS) : Math.max(0, framesVoz - framesMeme - FRAMES_TRANSICION) } }
+        : {}),
       audioSrc: url(a.archivo),
       captions: a.captions,
       stockSrc: url(visuales.stock[i]),

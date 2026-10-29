@@ -9,9 +9,8 @@ import { pedirAClaude } from "../claude";
 import { DIR_PROMPTS, RAIZ } from "../rutas";
 import { instruccionesModo, promptConTono, tonoDelTrabajo } from "../tonos";
 import { cantidadIlustracionDeModo, faltaDelModo, MODOS_EDICION, type ModoEdicion } from "../../shared/modos";
-import { clipsRelacionados, type Recurso } from "../../shared/biblioteca";
-import { leerBiblioteca, recursosDe } from "../biblioteca";
-import { lineaClip } from "../crudo/clipsCrudo";
+import type { Recurso } from "../../shared/biblioteca";
+import { candidatosDelVideo, fichasClips } from "../seleccionClips";
 import type { Trabajo } from "../trabajo";
 
 /** Variante del español según la voz elegida (para que el guion suene natural con esa voz). */
@@ -46,19 +45,16 @@ const ilustracionDelTrabajo = (opciones: Estado["opciones"], tono?: string) =>
 /** Clips de la biblioteca que este video puede usar (solo de las categorías elegidas), o [] si no lleva. */
 export const clipsDelTrabajo = async (opciones: Estado["opciones"], texto: string): Promise<Recurso[]> => {
   const uso = opciones.biblioteca;
-  if (!uso || uso.modo === "no") return [];
-  const todos = await recursosDe("video", uso.modo === "manual" ? [] : uso.categorias);
-  return uso.modo === "manual" ? todos.filter((c) => uso.elegidos.includes(c.id)) : clipsRelacionados(todos, texto, 80);
+  return uso ? candidatosDelVideo(uso, texto, 60) : [];
 };
 
 /** Bloque del pedido con los clips de la biblioteca disponibles. */
 const bloqueClips = async (clips: Recurso[], manual: boolean) => {
   if (!clips.length) return "";
-  const nombres = new Map((await leerBiblioteca()).categorias.map((c) => [c.id, c.nombre]));
   return [
-    "Clips de la biblioteca (plantilla `clip_biblioteca`, `clip` = el id). Usalos SOLO donde lo que se dice coincide de verdad con el clip (la misma persona, el mismo hecho o la frase); un meme o una reacción solo si remata con gracia algo y el tono lo permite, nunca en un momento serio. No hay mínimo: si ninguno encaja, no uses ninguno.",
+    "Clips de la biblioteca (plantilla `clip_biblioteca`, `clip` = el id, va sin su audio): usalos SOLO como imagen de lo que se dice (la misma persona, el mismo hecho, el mismo lugar). Los memes y reacciones con gracia NO van como escena: la app los inserta después, entre escenas y con su sonido. No hay mínimo: si ninguno encaja, no uses ninguno.",
     manual ? "Estos clips los eligió el usuario: ubicá cada uno donde mejor encaje (podés dejar afuera el que no encaje)." : "",
-    clips.map((c) => lineaClip(c, nombres)).join("\n"),
+    await fichasClips(clips),
   ].join("\n");
 };
 

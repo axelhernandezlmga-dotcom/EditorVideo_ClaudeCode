@@ -33,3 +33,5 @@ config/perfiles/*
 assets/ilustracion/generados/
 assets/ilustracion/faltantes.json
 *.parcial.mp4
+__pycache__/
+*.pyc

@@ -1,6 +1,6 @@
 {
   "name": "editor-video-claude-code",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "type": "module",
   "description": "Editor de video vertical con IA: de una idea o un video grabado a un reel listo para subir, con Claude Code y Remotion.",
@@ -28,7 +28,8 @@
     "ilustracion": "tsx src/cli/ilustracion.ts",
     "marca": "tsx src/cli/marca.ts",
     "biblioteca": "tsx src/cli/biblioteca.ts",
-    "perfil": "tsx src/cli/perfil.ts"
+    "perfil": "tsx src/cli/perfil.ts",
+    "publicar": "tsx scripts/publicar.ts"
   },
   "dependencies": {
     "@fastify/static": "10.1.6",

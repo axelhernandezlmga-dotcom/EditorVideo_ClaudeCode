@@ -223,12 +223,12 @@ const PlantillaMaterial: React.FC<{ m: Extract<MaterialRender, { tipo: "plantill
 };
 
 /** Todo el material del crudo, cada cosa en su secuencia. `limiteAbajo` = borde de arriba de los subtítulos. */
-/** Clip propio a pantalla completa (ya cortado a 9:16 y sin audio): entra con un fundido y un zoom lento. */
+/** Clip de la biblioteca a pantalla completa (ya cortado a 9:16, con o sin su audio): entra con un fundido y un zoom lento. */
 const ClipPropio: React.FC<{ m: Extract<MaterialRender, { tipo: "clip" }> }> = ({ m }) => {
   const { entrada, salida, frame, durationInFrames } = useAparicion();
   return (
     <AbsoluteFill style={{ opacity: Math.min(entrada, salida), backgroundColor: "#000" }}>
-      <OffthreadVideo src={m.video} muted style={{ width: "100%", height: "100%", objectFit: "cover", scale: String(1.02 + 0.06 * (frame / Math.max(1, durationInFrames))) }} />
+      <OffthreadVideo src={m.video} muted={!m.conAudio} volume={m.conAudio ? 1 : 0} style={{ width: "100%", height: "100%", objectFit: "cover", scale: String(1.02 + 0.06 * (frame / Math.max(1, durationInFrames))) }} />
     </AbsoluteFill>
   );
 };

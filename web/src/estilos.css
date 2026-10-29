@@ -2519,3 +2519,16 @@ input[type="range"] {
     display: none;
   }
 }
+.clip-usos {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--tenue);
+}
+.panel-analisis h2 {
+  margin-bottom: 0;
+}
+.controles-clips > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}

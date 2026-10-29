@@ -3,7 +3,7 @@ import { existsSync, mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { clipsRelacionados, coincideBusqueda, enCategorias, orientacionDe, slugCategoria, type Recurso } from "../src/shared/biblioteca";
+import { analisisVacio, coincideBusqueda, enCategorias, orientacionDe, slugCategoria, type Recurso } from "../src/shared/biblioteca";
 
 const dir = mkdtempSync(path.join(os.tmpdir(), "fabrica-biblioteca-"));
 process.env.FABRICA_BIBLIOTECA = path.join(dir, "biblioteca");
@@ -35,6 +35,7 @@ const recurso = (x: Partial<Recurso>): Recurso => ({
   descripcion: "",
   etiquetas: { lugar: [], personas: [], objetos: [], accion: [], mood: [] },
   descripcionPor: "nombre",
+  ...analisisVacio(),
   mood: null,
   bytes: 1,
   huella: "h",
@@ -61,12 +62,6 @@ describe("biblioteca (funciones puras)", () => {
     expect(enCategorias(recurso({ categoria: "frente-amplio" }), ["colorados", "memes-varios"])).toBe(false);
   });
 
-  it("con catálogos grandes manda primero los clips relacionados con el texto", () => {
-    const clips = Array.from({ length: 300 }, (_, i) => recurso({ id: `id${String(i).padStart(4, "0")}`, nombre: i === 250 ? "jubilación y AFAP" : `meme ${i}` }));
-    const elegidos = clipsRelacionados(clips, "hoy hablamos de la jubilación", 50);
-    expect(elegidos).toHaveLength(50);
-    expect(elegidos[0]!.nombre).toBe("jubilación y AFAP");
-  });
 });
 
 describe("biblioteca (archivos)", () => {

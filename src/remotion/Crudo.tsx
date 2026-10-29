@@ -2,7 +2,7 @@ import { Audio, Video } from "@remotion/media";
 import { useMemo } from "react";
 import { AbsoluteFill, interpolate, Sequence, useCurrentFrame, useVideoConfig } from "remotion";
 import { encuadre, framesCrudo, type CrudoProps } from "../shared/crudo";
-import { curvaMusica } from "../shared/musica";
+import { curvaDucking, curvaMusica, DUCKING_CLIP } from "../shared/musica";
 import { SUBTITULOS } from "../shared/render";
 import { EscenaContext, MarcaContext, useMarca } from "./contexto";
 import { Marcador } from "./marca/piezas";
@@ -33,6 +33,9 @@ export const Crudo: React.FC<CrudoProps> = (props) => {
   const { modo, rect } = encuadre(props.video.ancho, props.video.alto);
   const tramos = useMemo(() => tramosEnFrames(props.tramos, fps), [props.tramos, fps]);
   const escena = useMemo(() => ({ captions: props.captions, enfasis: props.enfasis, duracionFrames: durationInFrames, indice: 0 }), [props.captions, props.enfasis, durationInFrames]);
+  // mientras suena el audio original de un clip, la voz baja (y vuelve) suave
+  const conSonido = useMemo(() => clipsConSonido(props.material), [props.material]);
+  const vozDuck = useMemo(() => curvaDucking(conSonido, durationInFrames, fps, DUCKING_CLIP.voz), [conSonido, durationInFrames, fps]);
 
   return (
     <MarcaContext.Provider value={props.marca}>
@@ -66,7 +69,7 @@ export const Crudo: React.FC<CrudoProps> = (props) => {
                   <Video src={props.video.src} trimBefore={t.trimBefore} muted objectFit="fill" style={{ width: "100%", height: "100%" }} />
                 </div>
               </AbsoluteFill>
-              {props.audioSrc ? <Audio name="Voz" src={props.audioSrc} trimBefore={t.trimBefore} /> : null}
+              {props.audioSrc ? <Audio name="Voz" src={props.audioSrc} trimBefore={t.trimBefore} volume={(f) => vozDuck[Math.min(vozDuck.length - 1, t.desde + f)] ?? 1} /> : null}
             </Sequence>
           ))}
           {fuentesListas ? <MaterialCrudo material={props.material} limiteAbajo={props.subtitulosY - SUBTITULOS.alto / 2 - 20} /> : null}
@@ -85,7 +88,7 @@ export const Crudo: React.FC<CrudoProps> = (props) => {
             </Sequence>
           ) : null}
           <SonidosCrudo sfx={props.sfx} volumen={props.volumenSfx} />
-          {props.musica ? <MusicaCrudo {...props.musica} captions={props.captions} /> : null}
+          {props.musica ? <MusicaCrudo {...props.musica} captions={props.captions} clipsConSonido={conSonido} /> : null}
           {fuentesListas && props.cierre ? <CierreSeguir cierre={props.cierre} tramos={props.tramos} /> : null}
         </AbsoluteFill>
       </EscenaContext.Provider>
@@ -139,9 +142,13 @@ const CierreSeguir: React.FC<{ cierre: NonNullable<CrudoProps["cierre"]>; tramos
 };
 
 /** Música de fondo en loop: baja mientras se habla (ducking), con fundidos y arrancando alineada al pulso. */
-const MusicaCrudo: React.FC<NonNullable<CrudoProps["musica"]> & { captions: CrudoProps["captions"] }> = ({ src, volumen, desdeMs, captions }) => {
+const MusicaCrudo: React.FC<NonNullable<CrudoProps["musica"]> & { captions: CrudoProps["captions"]; clipsConSonido: { desdeMs: number; hastaMs: number }[] }> = ({ src, volumen, desdeMs, captions, clipsConSonido }) => {
   const { fps, durationInFrames } = useVideoConfig();
-  const curva = useMemo(() => curvaMusica(captions.map((c) => ({ desdeMs: c.startMs, hastaMs: c.endMs })), durationInFrames, fps, volumen), [captions, durationInFrames, fps, volumen]);
+  const curva = useMemo(() => {
+    const base = curvaMusica(captions.map((c) => ({ desdeMs: c.startMs, hastaMs: c.endMs })), durationInFrames, fps, volumen);
+    const duck = curvaDucking(clipsConSonido, durationInFrames, fps, DUCKING_CLIP.musica);
+    return base.map((v, f) => v * (duck[f] ?? 1));
+  }, [captions, durationInFrames, fps, volumen, clipsConSonido]);
   return (
     <Audio
       name="Música"
@@ -153,3 +160,6 @@ const MusicaCrudo: React.FC<NonNullable<CrudoProps["musica"]> & { captions: Crud
     />
   );
 };
+
+/** Cuándo suena el audio original de un clip (ms del video cortado). */
+export const clipsConSonido = (material: CrudoProps["material"]) => material.flatMap((m) => (m.tipo === "clip" && m.conAudio ? [{ desdeMs: m.desdeMs, hastaMs: m.hastaMs }] : []));

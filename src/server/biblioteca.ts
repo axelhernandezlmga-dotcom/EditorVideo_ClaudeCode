@@ -5,13 +5,12 @@ import { mkdir } from "node:fs/promises";
 import type { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
 import { z } from "zod";
+import { analisis, analizarClips, CLIPS_POR_PEDIDO, pendientesAnalisis } from "../pipeline/analisis";
 import {
   borrarCategoria,
   borrarRecursos,
   CambioRecursoSchema,
   crearCategoria,
-  describirClips,
-  descripcion,
   DIR_MEDIOS,
   DIR_MINIATURAS,
   editarRecurso,
@@ -43,7 +42,7 @@ export const registrarBiblioteca = async (app: FastifyInstance) => {
       void reply.code(codigo).send({ error: mensaje });
     });
 
-    r.get("/api/biblioteca", async () => ({ ...(await leerBiblioteca()), importacion, descripcion }));
+    r.get("/api/biblioteca", async () => ({ ...(await leerBiblioteca()), importacion, analisis, pendientes: await pendientesAnalisis(), clipsPorPedido: CLIPS_POR_PEDIDO }));
 
     r.post("/api/biblioteca/categorias", async (req) => ({ categoria: await crearCategoria(z.object({ nombre: z.string() }).parse(req.body).nombre) }));
 
@@ -66,34 +65,34 @@ export const registrarBiblioteca = async (app: FastifyInstance) => {
     /** Importar una carpeta de esta compu (en segundo plano: el progreso se ve en GET /api/biblioteca). */
     r.post("/api/biblioteca/importar-carpeta", async (req) => {
       const op = z
-        .object({ carpeta: z.string().trim().min(1, "Escribí la ruta de la carpeta"), categoria: z.string(), tipoAudio: TipoAudio, describir: z.boolean().default(false), transcribir: z.boolean().default(false) })
+        .object({ carpeta: z.string().trim().min(1, "Escribí la ruta de la carpeta"), categoria: z.string(), tipoAudio: TipoAudio })
         .parse(req.body);
       return { importacion: await importarCarpeta(op.carpeta, op) };
     });
 
     r.post("/api/biblioteca/importar/cancelar", async () => {
       importacion.cancelar = true;
-      descripcion.cancelar = true;
-      return { importacion, descripcion };
+      analisis.cancelar = true;
+      return { importacion, analisis };
     });
 
-    /** "Describir con Claude" los clips elegidos, o los de una categoría que solo tienen el nombre del archivo. */
-    r.post("/api/biblioteca/describir", async (req) => {
-      const { ids, categoria, transcribir } = z.object({ ids: z.array(z.string()).max(5000).optional(), categoria: z.string().optional(), transcribir: z.boolean().default(false) }).parse(req.body);
-      const b = await leerBiblioteca();
-      const lista = ids ?? b.recursos.filter((x) => x.tipo === "video" && x.categoria === categoria && x.descripcionPor === "nombre").map((x) => x.id);
-      return { descripcion: await describirClips(lista, { transcribir }) };
+    /**
+     * Analizar clips: fase "local" (gratis: fotogramas, volumen y transcripción) o "claude" (usa tu cuenta: un pedido
+     * cada 6 clips). Por categoría (solo los pendientes) o los elegidos; `limite` para probar con pocos.
+     */
+    r.post("/api/biblioteca/analizar", async (req) => {
+      const p = z.object({ fase: z.enum(["local", "claude"]), categoria: z.string().optional(), ids: z.array(z.string()).max(5000).optional(), limite: z.number().int().min(1).max(5000).optional() }).parse(req.body);
+      if (!p.categoria && !p.ids) throw new ErrorBiblioteca("Elegí una categoría o clips.");
+      return { analisis: await analizarClips(p) };
     });
 
     /** Subir un archivo desde el navegador (cuerpo crudo, uno por pedido). */
     r.addContentTypeParser("application/octet-stream", (_req, payload, hecho) => hecho(null, payload));
     r.post<{ Querystring: { categoria?: string; nombre?: string; tipoAudio?: string; describir?: string } }>("/api/biblioteca/subir", { bodyLimit: 4 * 1024 ** 3 }, async (req) => {
-      const q = z
-        .object({ categoria: z.string().min(1), nombre: z.string().min(1).max(255), tipoAudio: TipoAudio, describir: z.enum(["0", "1"]).default("0") })
-        .parse(req.query);
+      const q = z.object({ categoria: z.string().min(1), nombre: z.string().min(1).max(255), tipoAudio: TipoAudio }).parse(req.query);
       const tmp = await temporalSubida(q.nombre);
       await pipeline(req.body as Readable, createWriteStream(tmp));
-      const resultado = await importarSubida(tmp, q.nombre, { categoria: q.categoria, tipoAudio: q.tipoAudio, describir: q.describir === "1" });
+      const resultado = await importarSubida(tmp, q.nombre, { categoria: q.categoria, tipoAudio: q.tipoAudio });
       if (resultado.estado === "no_compatible") throw new ErrorBiblioteca(`${q.nombre}: no es un video ni un audio compatible.`);
       return resultado;
     });

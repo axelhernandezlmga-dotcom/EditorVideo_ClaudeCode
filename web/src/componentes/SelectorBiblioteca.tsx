@@ -1,6 +1,13 @@
 import { Check, Search } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { coincideBusqueda, type UsoBiblioteca } from "../../../src/shared/biblioteca";
+import { AUDIOS_CLIPS, FRECUENCIAS_CLIPS } from "../../../src/shared/opcionesCrudo";
+
+const AYUDA_AUDIO: Record<UsoBiblioteca["audio"], string> = {
+  auto: "El editor decide: suena cuando el audio es parte de la gracia y entra en una pausa; la voz y la música bajan mientras tanto.",
+  si: "Los clips con audio suenan siempre (la voz y la música bajan mientras tanto).",
+  no: "Los clips van sin su audio, como imagen.",
+};
 import { api, type Categoria, type Recurso } from "../api";
 import { urlMiniatura } from "../paginas/Biblioteca";
 
@@ -66,6 +73,29 @@ export const SelectorBiblioteca: React.FC<{ valor: UsoBiblioteca; onCambio: (v: 
                 </button>
               ))}
             </div>
+            <div className="fila controles-clips" style={{ gap: 16 }}>
+              <div>
+                <span className="ayuda">Audio original de los clips</span>
+                <div className="segmentado" role="radiogroup" aria-label="Audio original de los clips">
+                  {(Object.keys(AUDIOS_CLIPS) as UsoBiblioteca["audio"][]).map((k) => (
+                    <button key={k} role="radio" aria-checked={valor.audio === k} className={valor.audio === k ? "activo" : ""} onClick={() => onCambio({ ...valor, audio: k })} title={AYUDA_AUDIO[k]}>
+                      {AUDIOS_CLIPS[k]}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <span className="ayuda">Frecuencia de memes</span>
+                <div className="segmentado" role="radiogroup" aria-label="Frecuencia de memes">
+                  {(Object.keys(FRECUENCIAS_CLIPS) as UsoBiblioteca["frecuencia"][]).map((k) => (
+                    <button key={k} role="radio" aria-checked={valor.frecuencia === k} className={valor.frecuencia === k ? "activo" : ""} onClick={() => onCambio({ ...valor, frecuencia: k })} title={`Como mucho uno cada ~${FRECUENCIAS_CLIPS[k].cadaS} s`}>
+                      {FRECUENCIAS_CLIPS[k].nombre}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <span className="ayuda">{AYUDA_AUDIO[valor.audio]}</span>
             <label className="interruptor">
               <input type="checkbox" checked={valor.modo === "manual"} onChange={(e) => onCambio({ ...valor, modo: e.target.checked ? "manual" : "auto" })} />
               Elegir los clips a mano (si no, el editor elige los que tienen que ver con lo que se dice)

@@ -42,6 +42,10 @@ const Edicion: React.FC<{ r: Recurso; onGuardar: (cambio: Parameters<typeof api.
   const [nombre, setNombre] = useState(r.nombre);
   const [descripcion, setDescripcion] = useState(r.descripcion);
   const [etiquetas, setEtiquetas] = useState(() => Object.fromEntries(ETIQUETAS.map(({ clave }) => [clave, r.etiquetas[clave].join(", ")])) as Record<keyof EtiquetasClip, string>);
+  const [usos, setUsos] = useState(r.usos.join("\n"));
+  const [semantica, setSemantica] = useState(r.semantica.join(", "));
+  const [tono, setTono] = useState(r.tono);
+  const [transcripcion, setTranscripcion] = useState(r.transcripcion ?? "");
   const lista = (t: string) => t.split(",").map((x) => x.trim().toLowerCase()).filter(Boolean);
   return (
     <div className="edicion-recurso">
@@ -55,6 +59,22 @@ const Edicion: React.FC<{ r: Recurso; onGuardar: (cambio: Parameters<typeof api.
             <span>Descripción</span>
             <textarea value={descripcion} onChange={(e) => setDescripcion(e.target.value)} rows={3} />
           </label>
+          <label className="campo">
+            <span>Sirve para (una situación por línea)</span>
+            <textarea value={usos} onChange={(e) => setUsos(e.target.value)} rows={3} placeholder="cuando alguien gasta mucha plata" />
+          </label>
+          <label className="campo">
+            <span>Qué se dice</span>
+            <input type="text" value={transcripcion} onChange={(e) => setTranscripcion(e.target.value)} />
+          </label>
+          <label className="campo">
+            <span>Categorías semánticas (separadas por coma)</span>
+            <input type="text" value={semantica} onChange={(e) => setSemantica(e.target.value)} />
+          </label>
+          <label className="campo">
+            <span>Tono</span>
+            <input type="text" value={tono} onChange={(e) => setTono(e.target.value)} />
+          </label>
           {ETIQUETAS.map(({ clave, nombre: n }) => (
             <label key={clave} className="campo">
               <span>{n} (separadas por coma)</span>
@@ -67,7 +87,19 @@ const Edicion: React.FC<{ r: Recurso; onGuardar: (cambio: Parameters<typeof api.
         <button
           className="boton primario chico"
           onClick={() =>
-            onGuardar(r.tipo === "video" ? { nombre, descripcion, etiquetas: Object.fromEntries(ETIQUETAS.map(({ clave }) => [clave, lista(etiquetas[clave])])) as EtiquetasClip } : { nombre })
+            onGuardar(
+              r.tipo === "video"
+                ? {
+                    nombre,
+                    descripcion,
+                    etiquetas: Object.fromEntries(ETIQUETAS.map(({ clave }) => [clave, lista(etiquetas[clave])])) as EtiquetasClip,
+                    usos: usos.split("\n").map((x) => x.trim()).filter(Boolean).slice(0, 8),
+                    semantica: lista(semantica).slice(0, 12),
+                    tono: tono.trim(),
+                    transcripcion: transcripcion.trim() || null,
+                  }
+                : { nombre },
+            )
           }
         >
           <Save size={14} /> Guardar
@@ -115,11 +147,12 @@ const TarjetaVideo: React.FC<{ r: Recurso } & AccionesRecurso> = ({ r, categoria
           <>
             <b title={r.origen}>{r.nombre}</b>
             <small className="ayuda">
-              {r.ancho}×{r.alto} · {r.audio ? "con audio" : "sin audio"}
-              {r.descripcionPor === "claude" ? " · descripto por Claude" : r.descripcionPor === "manual" ? " · editado a mano" : ""}
+              {r.ancho}×{r.alto} · {r.audio ? (r.audioClave ? "audio clave" : "con audio") : "sin audio"}
+              {r.descripcionPor === "claude" ? " · analizado" : r.descripcionPor === "manual" ? " · editado a mano" : r.analisis.local ? " · fase local" : " · sin analizar"}
             </small>
             {r.descripcion ? <p className="clip-desc">{r.descripcion}</p> : null}
             {r.transcripcion ? <p className="clip-dice">«{r.transcripcion.length > 120 ? `${r.transcripcion.slice(0, 120)}…` : r.transcripcion}»</p> : null}
+            {r.usos.length ? <p className="clip-usos">Sirve para: {r.usos.slice(0, 2).join(" · ")}</p> : null}
             <div className="chips">
               {ETIQUETAS.flatMap(({ clave }) => r.etiquetas[clave].map((t) => ({ clave, t })))
                 .slice(0, 6)
@@ -212,7 +245,7 @@ const FilaAudio: React.FC<{ r: Recurso; sonando: boolean; onEscuchar: () => void
 /** Subir archivos o una carpeta (desde el navegador) o importar una carpeta de esta compu por su ruta. */
 const Importar: React.FC<{ categorias: Categoria[]; categoria: string; onTerminado: () => void }> = ({ categorias, categoria, onTerminado }) => {
   const avisar = useAviso();
-  const [op, setOp] = useState<OpcionesSubida>({ categoria: categoria || categorias[0]?.id || "", tipoAudio: "auto", describir: false });
+  const [op, setOp] = useState<OpcionesSubida>({ categoria: categoria || categorias[0]?.id || "", tipoAudio: "auto" });
   const [ruta, setRuta] = useState("");
   const [subiendo, setSubiendo] = useState<{ hechos: number; total: number; nuevos: number; repetidos: number } | null>(null);
   const archivos = useRef<HTMLInputElement>(null);
@@ -278,10 +311,6 @@ const Importar: React.FC<{ categorias: Categoria[]; categoria: string; onTermina
           </select>
         </label>
       </div>
-      <label className="interruptor" style={{ marginBottom: 12 }}>
-        <input type="checkbox" checked={op.describir} onChange={(e) => setOp({ ...op, describir: e.target.checked })} />
-        Describir cada clip con Claude (mejor elección, pero un pedido por clip)
-      </label>
       <div className="fila">
         <input ref={archivos} type="file" multiple hidden accept="video/*,audio/*" onChange={(e) => void subir(e.target.files).finally(() => (e.target.value = ""))} />
         <input
@@ -315,7 +344,7 @@ const Importar: React.FC<{ categorias: Categoria[]; categoria: string; onTermina
           <FolderInput size={18} /> Importar carpeta
         </button>
       </div>
-      <p className="ayuda">Todo se copia a la carpeta biblioteca/ del proyecto (el original no se toca). Los archivos repetidos se detectan por su contenido y no se importan dos veces.</p>
+      <p className="ayuda">Todo se copia a la carpeta biblioteca/ del proyecto (el original no se toca). Los archivos repetidos se detectan por su contenido y no se importan dos veces. Después, analizalos (abajo) para que el editor sepa qué pasa en cada clip.</p>
     </section>
   );
 };
@@ -340,7 +369,7 @@ export const BibliotecaPagina: React.FC = () => {
   useEffect(() => {
     cargar().catch((e: Error) => avisar(e.message, "error"));
   }, [cargar, avisar]);
-  const ocupada = b?.importacion.activa || b?.descripcion.activa;
+  const ocupada = b?.importacion.activa || b?.analisis.activa;
   useEffect(() => {
     if (!ocupada) return;
     const i = setInterval(() => void cargar().catch(() => undefined), 2000);
@@ -349,7 +378,7 @@ export const BibliotecaPagina: React.FC = () => {
   useEffect(() => setMostrar(POR_PAGINA), [tipo, categoria, busqueda, orden, soloSinDescribir]);
 
   const visibles = useMemo(() => {
-    const lista = (b?.recursos ?? []).filter((r) => r.tipo === tipo && (!categoria || r.categoria === categoria) && coincideBusqueda(r, busqueda) && (!soloSinDescribir || r.descripcionPor === "nombre"));
+    const lista = (b?.recursos ?? []).filter((r) => r.tipo === tipo && (!categoria || r.categoria === categoria) && coincideBusqueda(r, busqueda) && (!soloSinDescribir || !r.analisis.claude));
     const cmp = { nuevos: (x: Recurso, y: Recurso) => y.importado.localeCompare(x.importado), nombre: (x: Recurso, y: Recurso) => x.nombre.localeCompare(y.nombre, "es"), duracion: (x: Recurso, y: Recurso) => x.duracion - y.duracion }[orden];
     return lista.sort(cmp);
   }, [b, tipo, categoria, busqueda, orden, soloSinDescribir]);
@@ -374,7 +403,6 @@ export const BibliotecaPagina: React.FC = () => {
   };
   const alternar = (id: string) => setElegidos((e) => (e.includes(id) ? e.filter((x) => x !== id) : [...e, id]));
   const acciones = (r: Recurso): AccionesRecurso => ({ categorias: b.categorias, elegido: elegidos.includes(r.id), onElegir: () => alternar(r.id), onCambio: (c) => cambiar(r, c), onBorrar: () => borrar([r.id]) });
-  const sinDescribir = b.recursos.filter((r) => r.tipo === "video" && r.descripcionPor === "nombre" && (!categoria || r.categoria === categoria)).length;
 
   return (
     <>
@@ -399,20 +427,6 @@ export const BibliotecaPagina: React.FC = () => {
           </button>
         </div>
       ) : null}
-      {b.descripcion.activa ? (
-        <div className="aviso info" style={{ marginBottom: 14 }}>
-          Claude está describiendo clips: {b.descripcion.hechos} de {b.descripcion.total}
-          {b.descripcion.actual ? ` (${b.descripcion.actual})` : ""}.{" "}
-          <button className="boton chico" onClick={() => void correr(() => api.cancelarImportacion())}>
-            <X size={14} /> Detener
-          </button>
-        </div>
-      ) : b.descripcion.error ? (
-        <div className="aviso advertencia" style={{ marginBottom: 14 }}>
-          {b.descripcion.error}
-        </div>
-      ) : null}
-
       <div className="segmentado" role="tablist" style={{ marginBottom: 14 }}>
         {IDS_TIPOS_RECURSO.map((t) => (
           <button key={t} role="tab" aria-selected={tipo === t} className={tipo === t ? "activo" : ""} onClick={() => (setTipo(t), setElegidos([]))}>
@@ -482,11 +496,6 @@ export const BibliotecaPagina: React.FC = () => {
           <button className="boton chico peligro" onClick={() => setBorrandoCat(b.categorias.find((c) => c.id === categoria) ?? null)}>
             <Trash2 size={14} /> Borrar categoría
           </button>
-          {tipo === "video" && sinDescribir ? (
-            <button className="boton chico" disabled={Boolean(ocupada)} onClick={() => void correr(() => api.describirClips({ categoria }), "Arranqué a describir los clips.")} title="Claude mira 3 fotogramas de cada clip (un pedido por clip)">
-              <Sparkles size={14} /> Describir {sinDescribir} con Claude
-            </button>
-          ) : null}
         </div>
       ) : null}
       {borrandoCat ? (
@@ -503,6 +512,8 @@ export const BibliotecaPagina: React.FC = () => {
           }
         />
       ) : null}
+
+      {tipo === "video" ? <PanelAnalisis b={b} categoria={categoria} onCambio={() => void cargar()} /> : null}
 
       <Importar categorias={b.categorias} categoria={categoria} onTerminado={() => void cargar()} />
 
@@ -522,7 +533,7 @@ export const BibliotecaPagina: React.FC = () => {
         {tipo === "video" ? (
           <label className="interruptor">
             <input type="checkbox" checked={soloSinDescribir} onChange={(e) => setSoloSinDescribir(e.target.checked)} />
-            Sin describir
+            Sin analizar
           </label>
         ) : null}
       </div>
@@ -539,8 +550,13 @@ export const BibliotecaPagina: React.FC = () => {
             ))}
           </select>
           {tipo === "video" ? (
-            <button className="boton chico" disabled={Boolean(ocupada)} onClick={() => void correr(() => api.describirClips({ ids: elegidos }), "Arranqué a describir los clips elegidos.").then(() => setElegidos([]))}>
-              <Sparkles size={14} /> Describir con Claude
+            <button
+              className="boton chico"
+              disabled={Boolean(ocupada)}
+              title={`Usa tu cuenta de Claude: un pedido cada ${b.clipsPorPedido} clips`}
+              onClick={() => void correr(() => api.analizarClips({ fase: "claude", ids: elegidos }), "Arranqué a analizar los clips elegidos.").then(() => setElegidos([]))}
+            >
+              <Sparkles size={14} /> Analizar con Claude
             </button>
           ) : null}
           <button className="boton chico peligro" onClick={() => borrar(elegidos)}>
@@ -627,5 +643,96 @@ const BorrarCategoria: React.FC<{ categoria: Categoria; otras: Categoria[]; arch
         </div>
       )}
     </div>
+  );
+};
+
+/**
+ * Análisis de los clips de una categoría: fase local (gratis) y fase con Claude (usa la cuenta: se confirma con la
+ * cantidad de pedidos antes de arrancar). Se reanuda sola: nunca repite un clip ya analizado.
+ */
+const PanelAnalisis: React.FC<{ b: EstadoBiblioteca; categoria: string; onCambio: () => void }> = ({ b, categoria, onCambio }) => {
+  const avisar = useAviso();
+  const [confirmar, setConfirmar] = useState(false);
+  const a = b.analisis;
+  const p = categoria ? b.pendientes[categoria] : null;
+  const nombre = (id: string | null) => b.categorias.find((c) => c.id === id)?.nombre ?? "";
+  const lanzar = async (fase: "local" | "claude", limite?: number) => {
+    try {
+      await api.analizarClips({ fase, categoria, limite });
+      setConfirmar(false);
+      onCambio();
+    } catch (e) {
+      avisar((e as Error).message, "error");
+    }
+  };
+  return (
+    <section className="tarjeta panel-analisis">
+      <h2>Análisis de clips</h2>
+      <p className="ayuda" style={{ marginTop: 4 }}>
+        Para elegir clips por lo que pasa en ellos (no por el nombre del archivo). <b>Fase local</b>, gratis y en tu compu: fotogramas, volumen y transcripción de lo que se dice.{" "}
+        <b>Con Claude</b>: mira los fotogramas y escribe qué pasa, el tono, por qué es gracioso y en qué situaciones sirve. Se puede cortar y retomar: nunca repite un clip.
+      </p>
+      {a.activa ? (
+        <div className="aviso info">
+          <b>
+            {a.fase === "local" ? "Fase local" : "Analizando con Claude"} en «{nombre(a.categoria)}»: {a.hechos} de {a.total}
+          </b>
+          {a.fase === "claude" ? ` · ${a.pedidos} pedido(s)` : ""}
+          {a.actual ? <div className="ayuda">{a.actual}</div> : null}
+          <div className="progreso" style={{ marginTop: 8 }}>
+            <div style={{ width: `${(a.hechos / Math.max(1, a.total)) * 100}%` }} />
+          </div>
+          <button className="boton chico" style={{ marginTop: 8 }} onClick={() => void api.cancelarImportacion().then(onCambio)}>
+            <X size={14} /> Detener (se retoma después)
+          </button>
+        </div>
+      ) : !p ? (
+        <p className="ayuda">Elegí una categoría arriba para ver cuántos clips faltan analizar.</p>
+      ) : (
+        <>
+          <div className="fila" style={{ gap: 14, marginBottom: 10 }}>
+            <span>
+              <b>{p.clips}</b> clips · <b>{p.local}</b> sin fase local · <b>{p.claude}</b> sin analizar con Claude
+            </span>
+          </div>
+          <div className="fila" style={{ gap: 8 }}>
+            <button className="boton chico" disabled={!p.local} onClick={() => void lanzar("local")}>
+              <Film size={14} /> Fase local de {p.local} (gratis)
+            </button>
+            <button className="boton chico" disabled={!p.claude} onClick={() => setConfirmar(true)}>
+              <Sparkles size={14} /> Analizar {p.claude} con Claude…
+            </button>
+          </div>
+          {confirmar ? (
+            <div className="aviso advertencia" style={{ marginTop: 10 }}>
+              Esto usa tu cuenta de Claude Code: <b>{p.pedidos} pedido(s)</b> ({b.clipsPorPedido} clips por pedido). Conviene hacer primero la fase local (le da a Claude lo que se dice en cada clip).
+              <div className="fila" style={{ gap: 8, marginTop: 8 }}>
+                <button className="boton chico" onClick={() => void lanzar("claude", b.clipsPorPedido * 2)}>
+                  Probar con {b.clipsPorPedido * 2}
+                </button>
+                <button className="boton chico primario" onClick={() => void lanzar("claude")}>
+                  Analizar los {p.claude}
+                </button>
+                <button className="boton chico" onClick={() => setConfirmar(false)}>
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          ) : null}
+        </>
+      )}
+      {!a.activa && a.errores.length ? (
+        <details style={{ marginTop: 10 }}>
+          <summary className="ayuda">{a.errores.length} clip(s) con error en la última corrida (quedan pendientes)</summary>
+          <ul className="ayuda">
+            {a.errores.slice(0, 30).map((e, i) => (
+              <li key={i}>
+                {e.nombre}: {e.error}
+              </li>
+            ))}
+          </ul>
+        </details>
+      ) : null}
+    </section>
   );
 };

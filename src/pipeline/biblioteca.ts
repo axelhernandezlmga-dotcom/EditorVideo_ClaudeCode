@@ -4,7 +4,9 @@ import { copyFile, mkdir, open, readdir, readFile, rm, stat } from "node:fs/prom
 import path from "node:path";
 import { z } from "zod";
 import {
+  VERSION_BIBLIOTECA,
   BibliotecaSchema,
+  analisisVacio,
   CATEGORIAS_INICIALES,
   EtiquetasClipSchema,
   etiquetasVacias,
@@ -21,12 +23,9 @@ import {
   type TipoRecurso,
 } from "../shared/biblioteca";
 import { IDS_MOODS, type Mood } from "../shared/opcionesCrudo";
-import { unirPalabrasFw } from "../shared/transcripcion";
-import { pedirAClaude } from "./claude";
 import { leerMarca } from "./config";
-import { fasterWhisperInstalado } from "./crudo/transcripcion";
 import { ejecutar } from "./proceso";
-import { PYTHON_VENV, RAIZ } from "./rutas";
+import { RAIZ } from "./rutas";
 import { escribirAtomico } from "./trabajo";
 
 /**
@@ -38,8 +37,8 @@ export const DIR_BIBLIOTECA = process.env.FABRICA_BIBLIOTECA ?? path.join(RAIZ, 
 const ARCHIVO = path.join(DIR_BIBLIOTECA, "biblioteca.json");
 export const DIR_MEDIOS = path.join(DIR_BIBLIOTECA, "medios");
 export const DIR_MINIATURAS = path.join(DIR_BIBLIOTECA, "miniaturas");
-const DIR_FOTOGRAMAS = path.join(DIR_BIBLIOTECA, "fotogramas");
-const DIR_TMP = path.join(DIR_BIBLIOTECA, "tmp");
+export const DIR_FOTOGRAMAS = path.join(DIR_BIBLIOTECA, "fotogramas");
+export const DIR_TMP = path.join(DIR_BIBLIOTECA, "tmp");
 
 /** Catálogo viejo de "Mis clips" (antes de la biblioteca): se migra a la categoría Colorados la primera vez. */
 const DIR_CLIPS_VIEJO = process.env.FABRICA_DATOS_CLIPS ?? path.join(RAIZ, "data", "clips");
@@ -72,6 +71,8 @@ export const leerBiblioteca = async (): Promise<Biblioteca> => {
       const r = BibliotecaSchema.safeParse(JSON.parse(await readFile(ARCHIVO, "utf8")));
       if (!r.success) throw new ErrorBiblioteca(`biblioteca/biblioteca.json está dañado: ${r.error.issues[0]?.message ?? ""}`);
       cache = r.data;
+      // índice de una versión anterior: los campos nuevos ya vienen con su valor por defecto; se guarda migrado
+      if (cache.version < VERSION_BIBLIOTECA) await guardar(migrarBiblioteca(cache));
       return cache;
     }
     const ahora = new Date().toISOString();
@@ -82,6 +83,9 @@ export const leerBiblioteca = async (): Promise<Biblioteca> => {
   });
 };
 
+/** v1 → v2: los clips que ya había descripto Claude conservan su descripción; falta el análisis nuevo (usos, tono…). */
+export const migrarBiblioteca = (b: Biblioteca): Biblioteca => ({ ...b, version: VERSION_BIBLIOTECA });
+
 const modificar = <T>(fn: (b: Biblioteca) => T | Promise<T>): Promise<T> =>
   leerBiblioteca().then(() =>
     enOrden(async () => {
@@ -91,6 +95,9 @@ const modificar = <T>(fn: (b: Biblioteca) => T | Promise<T>): Promise<T> =>
       return r;
     }),
   );
+
+/** Cambia recursos del índice de a uno por vez (lo usa el análisis, que corre en segundo plano). */
+export const actualizarRecursos = (fn: (recursos: Recurso[]) => void) => modificar((b) => fn(b.recursos));
 
 /** Ruta absoluta de un recurso (siempre dentro de biblioteca/medios). */
 export const rutaRecurso = (r: Pick<Recurso, "archivo">) => {
@@ -152,6 +159,10 @@ export const CambioRecursoSchema = z
     categoria: z.string(),
     descripcion: z.string().max(600),
     etiquetas: EtiquetasClipSchema,
+    usos: z.array(z.string().trim().min(1).max(160)).max(8),
+    semantica: z.array(z.string().trim().min(1).max(40)).max(12),
+    tono: z.string().max(80),
+    transcripcion: z.string().max(1000).nullable(),
     mood: z.enum(IDS_MOODS).nullable(),
     tipo: z.enum(["musica", "sfx"]),
   })
@@ -164,13 +175,12 @@ export const editarRecurso = (id: string, cambio: z.infer<typeof CambioRecursoSc
     if (!r) throw new ErrorBiblioteca("Ese archivo ya no está en la biblioteca.");
     if (cambio.categoria !== undefined && !b.categorias.some((c) => c.id === cambio.categoria)) throw new ErrorBiblioteca("Esa categoría no existe.");
     if (cambio.tipo && r.tipo === "video") throw new ErrorBiblioteca("Un clip de video no puede pasar a ser audio.");
-    const { descripcion, etiquetas, ...resto } = cambio;
+    const { descripcion, etiquetas, usos, semantica, tono, transcripcion, ...resto } = cambio;
     Object.assign(r, resto);
-    if (descripcion !== undefined || etiquetas !== undefined) {
-      if (descripcion !== undefined) r.descripcion = descripcion;
-      if (etiquetas !== undefined) r.etiquetas = etiquetas;
-      r.descripcionPor = "manual";
-    }
+    // lo que corregís a mano queda marcado: el análisis con Claude ya no lo pisa
+    const manual = { descripcion, etiquetas, usos, semantica, tono, transcripcion };
+    const cambiados = Object.fromEntries(Object.entries(manual).filter(([, v]) => v !== undefined));
+    if (Object.keys(cambiados).length) Object.assign(r, cambiados, { descripcionPor: "manual" as const });
     return r;
   });
 
@@ -239,25 +249,6 @@ const miniatura = async (archivo: string, id: string, duracion: number) => {
   await ejecutar("ffmpeg", ["-v", "error", "-y", "-ss", Math.max(0, duracion * 0.5).toFixed(2), "-i", archivo, "-frames:v", "1", "-vf", "scale=360:-2", "-q:v", "4", path.join(DIR_MINIATURAS, `${id}.jpg`)]);
 };
 
-/** Hoja con 3 fotogramas (15 %, 50 % y 85 %) para que Claude describa el clip. */
-const hojaFotogramas = async (archivo: string, id: string, duracion: number) => {
-  await mkdir(DIR_FOTOGRAMAS, { recursive: true });
-  const t = [0.15, 0.5, 0.85].map((p) => Math.max(0, duracion * p).toFixed(2));
-  await ejecutar("ffmpeg", [
-    "-v",
-    "error",
-    "-y",
-    ...t.flatMap((s) => ["-ss", s, "-i", archivo]),
-    "-filter_complex",
-    "[0:v]scale=-2:480,setsar=1[a];[1:v]scale=-2:480,setsar=1[b];[2:v]scale=-2:480,setsar=1[c];[a][b][c]hstack=3",
-    "-frames:v",
-    "1",
-    "-q:v",
-    "4",
-    path.join(DIR_FOTOGRAMAS, `${id}.jpg`),
-  ]);
-};
-
 /** "ElChinoRB2/no contaban con mi astucia.mp4" → nombre y etiquetas que ya sirven para buscar y elegir. */
 const datosDelNombre = (nombreArchivo: string, carpetas: string[]) => {
   const nombre = path.basename(nombreArchivo).replace(/\.[^.]+$/, "").replace(/[_]+/g, " ").replace(/\s+/g, " ").trim() || "sin nombre";
@@ -287,10 +278,6 @@ export type OpcionesImportar = {
   categoria: string;
   /** Para audio: "auto" = efecto si dura menos de 20 s, música si no. */
   tipoAudio?: "auto" | "musica" | "sfx";
-  /** Describir cada clip con Claude (mira 3 fotogramas): mejor elección, pero un pedido por clip. */
-  describir?: boolean;
-  /** Transcribir lo que se dice en cada clip (faster-whisper, local). */
-  transcribir?: boolean;
   /** Nombre a mostrar (si no, el del archivo) y carpetas de donde vino (se usan como etiquetas). */
   nombre?: string;
   carpetas?: string[];
@@ -341,6 +328,7 @@ export const importarArchivo = async (archivo: string, op: OpcionesImportar): Pr
       descripcion: "",
       etiquetas,
       descripcionPor: "nombre",
+      ...analisisVacio(),
       mood: tipo === "musica" ? (moodDelTexto(`${base} ${(op.carpetas ?? []).join(" ")} ${nombreCategoria}`) ?? "chill") : null,
       bytes: st.size,
       huella,
@@ -348,10 +336,8 @@ export const importarArchivo = async (archivo: string, op: OpcionesImportar): Pr
     };
     try {
       if (esVideo) await miniatura(destino, id, s.duracion);
-      if (esVideo && s.audio && op.transcribir) r.transcripcion = await transcribir(destino, id);
-      if (esVideo && op.describir) Object.assign(r, await describir(r, destino));
     } catch {
-      // sin miniatura, transcripción o descripción el clip igual sirve (se busca por su nombre)
+      // sin miniatura el clip igual sirve
     }
     // otra importación pudo agregar el mismo archivo mientras tanto
     const agregado = await modificar((bb) => {
@@ -446,102 +432,6 @@ export const temporalSubida = async (nombre: string) => {
   return path.join(DIR_TMP, `${randomBytes(6).toString("hex")}${path.extname(nombre).toLowerCase()}`);
 };
 
-// ---------- describir y transcribir (opcionales) ----------
-
-/** Transcribe lo que se dice en el clip, con faster-whisper (local, gratis). */
-const transcribir = async (archivo: string, id: string): Promise<string | null> => {
-  if (!(await fasterWhisperInstalado())) return null;
-  await mkdir(DIR_TMP, { recursive: true });
-  const wav = path.join(DIR_TMP, `${id}.wav`);
-  const salida = path.join(DIR_TMP, `${id}.json`);
-  try {
-    await ejecutar("ffmpeg", ["-v", "error", "-y", "-i", archivo, "-vn", "-ac", "1", "-ar", "16000", "-c:a", "pcm_s16le", wav]);
-    const marca = await leerMarca();
-    await ejecutar(PYTHON_VENV, [path.join(RAIZ, "src", "pipeline", "crudo", "transcribir.py"), wav, marca.crudo.modeloWhisper, String(marca.crudo.hilosTranscripcion), "", salida]);
-    const r = JSON.parse(await readFile(salida, "utf8")) as { palabras: { t: string; i: number; f: number; p: number | null }[] };
-    const texto = unirPalabrasFw(r.palabras)
-      .map((p) => p.texto)
-      .join(" ")
-      .trim();
-    return texto.split(/\s+/).length >= 3 ? texto : null;
-  } catch {
-    return null;
-  } finally {
-    await rm(wav, { force: true });
-    await rm(salida, { force: true });
-  }
-};
-
-const DescripcionSchema = z.object({
-  descripcion: z.string().max(400).describe("Qué se ve en el clip, en una o dos frases concretas"),
-  etiquetas: EtiquetasClipSchema,
-});
-
-const PROMPT_DESCRIBIR = `Sos archivista de video. Mirá la imagen fotogramas.jpg: son 3 fotogramas (al 15 %, 50 % y 85 %) de un clip de video.
-Describí qué se ve, concreto y sin inventar: quién aparece (si es alguien reconocible o lo dice el texto en pantalla o
-el nombre del archivo, nombralo; si no, describilo: "hombre mayor de traje en un estudio de TV"), dónde, qué pasa y el
-tono (si es un meme o una reacción, decilo y para qué tipo de momento sirve). Las etiquetas van en español, en
-minúsculas, cortas. Si algo no se puede saber, dejalo vacío.`;
-
-const describir = async (r: Recurso, archivo: string): Promise<Pick<Recurso, "descripcion" | "etiquetas" | "descripcionPor">> => {
-  await hojaFotogramas(archivo, r.id, r.duracion);
-  // carpeta con solo la hoja del clip: Claude no ve nada más
-  const dir = path.join(DIR_TMP, `describir-${r.id}`);
-  await mkdir(dir, { recursive: true });
-  await copyFile(path.join(DIR_FOTOGRAMAS, `${r.id}.jpg`), path.join(dir, "fotogramas.jpg"));
-  try {
-    const marca = await leerMarca();
-    const d = await pedirAClaude({
-      prompt: `${PROMPT_DESCRIBIR}\n\nArchivo: ${r.origen || r.nombre} (${r.duracion.toFixed(1)} s, ${r.orientacion}).${r.transcripcion ? `\nLo que se dice: "${r.transcripcion}"` : ""}\n\nLeé fotogramas.jpg con la herramienta Read.`,
-      schema: DescripcionSchema,
-      cwd: dir,
-      herramientas: ["Read"],
-      model: marca.modeloClaude,
-    });
-    return { descripcion: d.descripcion, etiquetas: { ...d.etiquetas, objetos: [...new Set([...r.etiquetas.objetos, ...d.etiquetas.objetos])].slice(0, 12) }, descripcionPor: "claude" };
-  } finally {
-    await rm(dir, { recursive: true, force: true });
-  }
-};
-
-export type EstadoDescripcion = { activa: boolean; hechos: number; total: number; actual: string | null; error: string | null; cancelar: boolean };
-export const descripcion: EstadoDescripcion = { activa: false, hechos: 0, total: 0, actual: null, error: null, cancelar: false };
-
-/**
- * "Describir con Claude": los clips elegidos (o los de una categoría que todavía no tienen descripción) se
- * describen mirando 3 fotogramas. Las descripciones hechas a mano no se tocan.
- */
-export const describirClips = async (ids: string[], opciones: { transcribir?: boolean } = {}) => {
-  if (descripcion.activa) throw new ErrorBiblioteca("Ya estoy describiendo clips: esperá a que termine.");
-  const b = await leerBiblioteca();
-  const lista = b.recursos.filter((r) => ids.includes(r.id) && r.tipo === "video" && r.descripcionPor !== "manual");
-  Object.assign(descripcion, { activa: true, hechos: 0, total: lista.length, actual: null, error: null, cancelar: false });
-  void (async () => {
-    try {
-      for (const r of lista) {
-        if (descripcion.cancelar) break;
-        descripcion.actual = r.nombre;
-        try {
-          const archivo = rutaRecurso(r);
-          const transcripcion = opciones.transcribir && r.audio && !r.transcripcion ? await transcribir(archivo, r.id) : r.transcripcion;
-          const d = await describir({ ...r, transcripcion }, archivo);
-          await modificar((bb) => {
-            const x = bb.recursos.find((y) => y.id === r.id);
-            if (x && x.descripcionPor !== "manual") Object.assign(x, d, { transcripcion });
-          });
-        } catch (e) {
-          descripcion.error = `No pude describir ${r.nombre}: ${(e as Error).message.split("\n")[0]}`;
-        }
-        descripcion.hechos++;
-      }
-    } finally {
-      descripcion.activa = false;
-      descripcion.actual = null;
-    }
-  })();
-  return descripcion;
-};
-
 // ---------- migración de "Mis clips" (v5–v7) ----------
 
 const CatalogoViejoSchema = z.object({
@@ -608,6 +498,7 @@ const migrarMisClips = async (categoria: string): Promise<Recurso[]> => {
       descripcion: c.descripcion,
       etiquetas: c.etiquetas,
       descripcionPor: c.descripcionPor === "ninguna" ? "nombre" : c.descripcionPor,
+      ...analisisVacio(),
       mood: null,
       bytes: c.bytes,
       huella: c.huella,

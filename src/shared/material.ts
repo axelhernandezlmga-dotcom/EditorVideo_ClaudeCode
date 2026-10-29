@@ -134,6 +134,8 @@ export const ItemMaterialSchema = z.object({
       duracionS: z.number(),
       archivo: z.string(),
       motivo: z.string(),
+      /** Suena con su audio original (la voz y la música bajan mientras tanto). */
+      conAudio: z.boolean().default(false),
     })
     .optional(),
 });
@@ -169,7 +171,7 @@ export const materialEnPantalla = (items: ItemMaterial[], tramos: Tramo[], url: 
     } else if ((it.tipo === "dato" || it.tipo === "escena") && it.dato) {
       out.push({ ...base, tipo: "plantilla", plantilla: it.dato.plantilla, props: it.dato.props });
     } else if (it.tipo === "clip" && it.clip) {
-      out.push({ ...base, tipo: "clip", video: url(it.clip.archivo) });
+      out.push({ ...base, tipo: "clip", video: url(it.clip.archivo), conAudio: it.clip.conAudio });
     } else if (it.imagen?.archivo) {
       out.push({ ...base, tipo: "imagen", imagen: url(it.imagen.archivo), credito: it.imagen.credito, etiqueta: it.imagen.etiqueta, marco: it.imagen.marco ?? "completa" });
     } else if (it.tarjeta) {

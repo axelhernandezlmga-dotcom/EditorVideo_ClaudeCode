@@ -92,6 +92,11 @@ export type EscenaRender = Escena & {
   stockSrc?: string | null;
   /** foto_real: la foto verificada (o null: va la tarjeta de texto). */
   foto?: { src: string; credito: string | null } | null;
+  /**
+   * Clip de la Biblioteca (un meme) que entra en esta escena desde `desdeFrame`: con su audio, en una pausa después
+   * de la narración (la escena se alarga lo que dura); sin audio, encima del final de la narración.
+   */
+  meme?: { src: string; desdeFrame: number; duracionFrames: number; conAudio: boolean };
   /** foto_real en collage: las otras fotos verificadas. */
   fotosExtra?: { src: string; credito: string | null }[];
   /** Con kit: fecha que se sacó de un título y va en su línea de Plex Mono («18 AGO 2026»). */

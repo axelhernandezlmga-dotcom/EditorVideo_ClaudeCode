@@ -14,7 +14,8 @@ import type { Mood, PedidoCrudo } from "../../src/shared/opcionesCrudo";
 import type { Pista } from "../../src/shared/musica";
 import type { Biblioteca, Categoria, EtiquetasClip, Recurso, TipoRecurso, UsoBiblioteca } from "../../src/shared/biblioteca";
 import type { ModoEdicion } from "../../src/shared/modos";
-import type { EstadoDescripcion, EstadoImportacion, ResultadoImportar } from "../../src/pipeline/biblioteca";
+import type { EstadoImportacion, ResultadoImportar } from "../../src/pipeline/biblioteca";
+import type { EstadoAnalisis, FaseAnalisis } from "../../src/pipeline/analisis";
 
 export type { DetalleCrudo, DetalleTrabajo, DetalleVoz, ResumenTrabajo };
 const binario = { "Content-Type": "application/octet-stream" };
@@ -40,10 +41,11 @@ type PedidoCredencial = { nombre: string; servicio: string; servicioNombre?: str
 export type ModeloTranscripcion = (typeof MODELOS_TRANSCRIPCION)[number] & { bajado: boolean; aprobado: boolean };
 export type EspacioTrabajo = { total: number; liberaDisco: number; liberaSoloFinal: number };
 export type ModoBorrado = "lista" | "disco" | "soloFinal";
-export type { Perfil, Biblioteca, Categoria, Recurso, TipoRecurso, EstadoImportacion, EstadoDescripcion, ResultadoImportar };
-export type EstadoBiblioteca = Biblioteca & { importacion: EstadoImportacion; descripcion: EstadoDescripcion };
-export type CambioRecurso = Partial<{ nombre: string; categoria: string; descripcion: string; etiquetas: EtiquetasClip; mood: Mood | null; tipo: "musica" | "sfx" }>;
-export type OpcionesSubida = { categoria: string; tipoAudio: "auto" | "musica" | "sfx"; describir: boolean };
+export type { Perfil, Biblioteca, Categoria, Recurso, TipoRecurso, EstadoImportacion, EstadoAnalisis, ResultadoImportar };
+export type PendientesAnalisis = Record<string, { clips: number; local: number; claude: number; pedidos: number }>;
+export type EstadoBiblioteca = Biblioteca & { importacion: EstadoImportacion; analisis: EstadoAnalisis; pendientes: PendientesAnalisis; clipsPorPedido: number };
+export type CambioRecurso = Partial<{ nombre: string; categoria: string; descripcion: string; etiquetas: EtiquetasClip; usos: string[]; semantica: string[]; tono: string; transcripcion: string | null; mood: Mood | null; tipo: "musica" | "sfx" }>;
+export type OpcionesSubida = { categoria: string; tipoAudio: "auto" | "musica" | "sfx" };
 
 const pedir = async <T,>(url: string, opciones: RequestInit = {}): Promise<T> => {
   let r: Response;
@@ -119,9 +121,9 @@ export const api = {
   borrarRecursos: (ids: string[]) => post<{ borrados: number }>("/api/biblioteca/recursos/borrar", { ids }),
   importarCarpeta: (carpeta: string, op: OpcionesSubida) => post<{ importacion: EstadoImportacion }>("/api/biblioteca/importar-carpeta", { carpeta, ...op }),
   cancelarImportacion: () => post("/api/biblioteca/importar/cancelar"),
-  describirClips: (pedido: { ids?: string[]; categoria?: string }) => post<{ descripcion: EstadoDescripcion }>("/api/biblioteca/describir", pedido),
+  analizarClips: (pedido: { fase: FaseAnalisis; ids?: string[]; categoria?: string; limite?: number }) => post<{ analisis: EstadoAnalisis }>("/api/biblioteca/analizar", pedido),
   subirABiblioteca: (archivo: File, op: OpcionesSubida, nombre = archivo.name) =>
-    pedir<ResultadoImportar>(`/api/biblioteca/subir?categoria=${encodeURIComponent(op.categoria)}&nombre=${encodeURIComponent(nombre)}&tipoAudio=${op.tipoAudio}&describir=${op.describir ? "1" : "0"}`, {
+    pedir<ResultadoImportar>(`/api/biblioteca/subir?categoria=${encodeURIComponent(op.categoria)}&nombre=${encodeURIComponent(nombre)}&tipoAudio=${op.tipoAudio}`, {
       method: "POST",
       body: archivo,
       headers: binario,

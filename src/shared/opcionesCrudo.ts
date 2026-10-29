@@ -41,8 +41,24 @@ export const UsoBibliotecaSchema = z.object({
   categorias: z.array(z.string()).max(100).default([]),
   /** Clips elegidos a mano (ids de la biblioteca). */
   elegidos: z.array(z.string()).max(50).default([]),
+  /** Audio original de los clips: automático (Claude decide según la escena), siempre que tengan, o nunca. */
+  audio: z.enum(["auto", "si", "no"]).default("auto"),
+  /** Cuántos clips como mucho (ver FRECUENCIAS_CLIPS). */
+  frecuencia: z.enum(["baja", "media", "alta"]).default("media"),
 });
 export type UsoBiblioteca = z.infer<typeof UsoBibliotecaSchema>;
+
+/** Frecuencia de clips: como mucho uno cada tantos segundos de video (y nunca menos de `minimo` si alguno encaja). */
+export const FRECUENCIAS_CLIPS = {
+  baja: { nombre: "Baja", cadaS: 45, minimo: 1 },
+  media: { nombre: "Media", cadaS: 20, minimo: 1 },
+  alta: { nombre: "Alta", cadaS: 10, minimo: 2 },
+} as const;
+export const maxClipsPara = (frecuencia: keyof typeof FRECUENCIAS_CLIPS, duracionS: number) => {
+  const f = FRECUENCIAS_CLIPS[frecuencia];
+  return Math.min(12, Math.max(f.minimo, Math.floor(duracionS / f.cadaS)));
+};
+export const AUDIOS_CLIPS = { auto: "Automático", si: "Activado", no: "Desactivado" } as const;
 
 /**
  * Opciones del formulario al subir un crudo. Se guardan en el estado.json del trabajo (opciones.crudo) y las

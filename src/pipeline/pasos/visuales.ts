@@ -6,6 +6,7 @@ import { moodDeGuion, moodPermitido } from "../../shared/musica";
 import { VozSchema, type Guion, type Marca } from "../../shared/schemas";
 import { TRAMO_CLIP } from "../../shared/biblioteca";
 import { cortarClip } from "../crudo/clipsCrudo";
+import { elegirMemes } from "./memes";
 import { ponerMusica } from "../musica";
 import { creditoCorto, elegirImagenReal } from "../crudo/imagenesReales";
 import { pexelsKey } from "../config";
@@ -28,6 +29,8 @@ export const VisualesSchema = z.object({
     .record(z.string(), z.object({ archivo: z.string(), credito: z.string().nullable(), extras: z.array(z.object({ archivo: z.string(), credito: z.string().nullable() })).default([]) }).nullable())
     .default({}),
   creditos: z.array(z.string()),
+  /** Memes de la Biblioteca por escena (índice): el tramo cortado, cuánto dura y si suena con su audio. */
+  memes: z.record(z.string(), z.object({ archivo: z.string(), duracionMs: z.number(), conAudio: z.boolean(), clip: z.string(), nombre: z.string(), motivo: z.string() })).default({}),
   /** Escenas ilustradas: objetos dibujados por la app que usa este video (SVG saneado), por id. */
   svgs: z.record(z.string(), z.string()).default({}),
 });
@@ -49,7 +52,7 @@ const archivosAudio = async (dir: string): Promise<string[]> => {
 /** Paso 5 (assets): música, efecto de transición y clips de Pexels, copiados dentro del trabajo. */
 export const pasoVisuales = async (t: Trabajo, guion: Guion, marca: Marca, signal?: AbortSignal, moodsPerfil: string[] = []): Promise<Visuales> => {
   const previo = await t.leer("visuales.json", VisualesSchema);
-  const v: Visuales = { musica: null, sfx: null, pop: null, tic: null, stock: {}, fotos: {}, creditos: [], svgs: {} };
+  const v: Visuales = { musica: null, sfx: null, pop: null, tic: null, stock: {}, fotos: {}, creditos: [], svgs: {}, memes: {} };
 
   if (marca.musica) {
     if (previo?.musica && t.existe(previo.musica)) v.musica = previo.musica;
@@ -168,6 +171,9 @@ export const pasoVisuales = async (t: Trabajo, guion: Guion, marca: Marca, signa
 
   // escenas ilustradas: los objetos que pidió el guion y no están en la biblioteca se dibujan (y se miran)
   if (guion.escenas.some((e) => e.plantilla === "escena_ilustrada")) v.svgs = await prepararIlustracion(t, guion, marca, signal);
+
+  // memes de la Biblioteca entre escenas (solo de las categorías elegidas y si encajan de verdad)
+  v.memes = previo && Object.keys(previo.memes).length && Object.values(previo.memes).every((m) => t.existe(m.archivo)) ? previo.memes : await elegirMemes(t, guion, marca, signal);
 
   await t.escribir("visuales.json", v);
   return v;

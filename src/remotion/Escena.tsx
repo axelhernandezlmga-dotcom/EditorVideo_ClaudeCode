@@ -5,7 +5,19 @@ import { EscenaContext, useMarca } from "./contexto";
 import { PLANTILLAS_MARCA } from "./marca/plantillasMarca";
 import { Marcador } from "./marca/piezas";
 import { avance, FUENTE_DATOS } from "./marca/base";
-import { useCurrentFrame } from "remotion";
+import { interpolate, OffthreadVideo, Sequence, useCurrentFrame, useVideoConfig } from "remotion";
+
+/** Meme de la Biblioteca a pantalla completa (entra y sale con un fundido corto; su audio ya viene nivelado). */
+const MemeEnEscena: React.FC<{ src: string; conAudio: boolean }> = ({ src, conAudio }) => {
+  const frame = useCurrentFrame();
+  const { durationInFrames } = useVideoConfig();
+  const opacidad = interpolate(frame, [0, 4, durationInFrames - 4, durationInFrames], [0, 1, 1, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+  return (
+    <AbsoluteFill style={{ backgroundColor: "#000", opacity: opacidad }}>
+      <OffthreadVideo src={src} muted={!conAudio} style={{ width: "100%", height: "100%", objectFit: "cover", scale: String(1.02 + 0.05 * (frame / Math.max(1, durationInFrames))) }} />
+    </AbsoluteFill>
+  );
+};
 
 /** La fecha que se sacó de un título, en Plex Mono gris (debajo del contenido, arriba de los subtítulos). */
 const FechaSuelta: React.FC<{ fecha: string }> = ({ fecha }) => {
@@ -43,6 +55,11 @@ export const Escena: React.FC<{ escena: EscenaRender; paginaMs: number; indice: 
         {kit && escena.fechaMarca ? <FechaSuelta fecha={escena.fechaMarca} /> : null}
         <Subtitulos paginaMs={paginaMs} />
         {escena.audioSrc ? <Audio name="Voz" src={escena.audioSrc} /> : null}
+        {escena.meme ? (
+          <Sequence name={escena.meme.conAudio ? "Meme con sonido" : "Meme"} from={escena.meme.desdeFrame} durationInFrames={escena.meme.duracionFrames}>
+            <MemeEnEscena src={escena.meme.src} conAudio={escena.meme.conAudio} />
+          </Sequence>
+        ) : null}
       </AbsoluteFill>
     </EscenaContext.Provider>
   );

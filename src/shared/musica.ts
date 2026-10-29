@@ -187,3 +187,30 @@ export const moodPermitido = <T extends string>(mood: T, permitidos: string[]): 
   if (!permitidos.length || permitidos.includes(mood)) return mood;
   return ((PARECIDOS[mood] ?? []).find((m) => permitidos.includes(m)) ?? permitidos[0]) as T;
 };
+
+/** Cuánto bajan la voz y la música mientras suena el audio original de un clip (factor de volumen). */
+export const DUCKING_CLIP = { voz: 0.18, musica: 0.3, rampaMs: 220 } as const;
+
+/**
+ * Factor de volumen por frame (1 = normal) que baja a `nivel` durante cada intervalo [desdeMs, hastaMs) y vuelve,
+ * con rampas de `rampaMs` (coseno) que terminan de bajar justo cuando empieza el intervalo y empiezan a subir cuando
+ * termina: así no hay saltos ni clics, y el clip suena entero sobre el fondo ya bajo.
+ */
+export const curvaDucking = (intervalos: { desdeMs: number; hastaMs: number }[], totalFrames: number, fps: number, nivel: number, rampaMs: number = DUCKING_CLIP.rampaMs): Float32Array => {
+  const curva = new Float32Array(totalFrames).fill(1);
+  for (let f = 0; f < totalFrames; f++) {
+    const ms = (f / fps) * 1000;
+    let factor = 1;
+    for (const { desdeMs, hastaMs } of intervalos) {
+      let x: number; // 0 = volumen normal, 1 = bajado del todo
+      if (ms >= desdeMs && ms < hastaMs) x = 1;
+      else if (ms < desdeMs && ms >= desdeMs - rampaMs) x = (ms - (desdeMs - rampaMs)) / rampaMs;
+      else if (ms >= hastaMs && ms < hastaMs + rampaMs) x = 1 - (ms - hastaMs) / rampaMs;
+      else continue;
+      const suave = 0.5 - 0.5 * Math.cos(Math.PI * x);
+      factor = Math.min(factor, 1 - (1 - nivel) * suave);
+    }
+    curva[f] = factor;
+  }
+  return curva;
+};
