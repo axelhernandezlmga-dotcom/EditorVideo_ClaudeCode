@@ -1,0 +1,35 @@
+node_modules/
+.venv/
+jobs/*
+!jobs/.gitkeep
+web/dist/
+whisper.cpp/
+.cache/
+.env
+*.log
+out/
+assets/sfx/*
+!assets/sfx/LEEME.md
+tmp-*
+data/
+pruebas-voz/
+
+biblioteca/*
+!biblioteca/LEEME.md
+
+# ---------- privado: queda en tu compu, nunca en git ----------
+# tu configuración (se crea sola con valores por defecto)
+config/marca.json
+# tus perfiles, fotos y kits de marca (solo se publica el perfil predeterminado)
+config/perfiles/*
+!config/perfiles/predeterminado.json
+# claves y tokens
+.env.*
+!.env.example
+# configuración personal de Claude Code
+.claude/settings.local.json
+.claude/*.local.*
+# generados por la app
+assets/ilustracion/generados/
+assets/ilustracion/faltantes.json
+*.parcial.mp4

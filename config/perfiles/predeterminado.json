@@ -1,0 +1,23 @@
+{
+  "slug": "predeterminado",
+  "nombre": "Mi canal",
+  "usuario": "@micanal",
+  "verificado": false,
+  "paleta": "fabrica",
+  "colores": {
+    "fondo": "#0B1020",
+    "fondo2": "#1E2A5A",
+    "texto": "#FFFFFF",
+    "acento": "#FFD23F",
+    "acento2": "#FF4D6D",
+    "subtitulos": "#000000"
+  },
+  "tipografia": "Montserrat",
+  "foto": null,
+  "subtitulos": {
+    "estilo": "contorno",
+    "tamano": "normal"
+  },
+  "lineaEditorial": "ninguna",
+  "moodsMusica": []
+}

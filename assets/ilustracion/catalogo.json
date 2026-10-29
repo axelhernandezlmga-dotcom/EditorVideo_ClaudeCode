@@ -1,0 +1,1493 @@
+{
+  "generado": "npm run ilustracion -- --catalogo",
+  "acciones_personaje": {
+    "reposo": "Respira (quieto pero vivo)",
+    "hablar": "Habla con gestos",
+    "senalar": "Señala hacia adelante",
+    "caminar": "Camina",
+    "sorprenderse": "Se sorprende (salta)",
+    "enojarse": "Se enoja (tiembla)",
+    "festejar": "Festeja con los brazos arriba",
+    "pensar": "Piensa (mano en el mentón)",
+    "encogerse": "Se encoge de hombros",
+    "contar_plata": "Cuenta billetes",
+    "votar": "Mete el voto",
+    "saludar": "Saluda con la mano",
+    "preocuparse": "Se agarra la cabeza"
+  },
+  "piezas": [
+    {
+      "id": "narrador",
+      "tipo": "personaje",
+      "nombre": "Narrador del perfil",
+      "etiquetas": [
+        "narrador",
+        "presentador",
+        "yo"
+      ],
+      "acciones": [
+        "reposo",
+        "hablar",
+        "senalar",
+        "caminar",
+        "sorprenderse",
+        "enojarse",
+        "festejar",
+        "pensar",
+        "encogerse",
+        "contar_plata",
+        "votar",
+        "saludar",
+        "preocuparse"
+      ],
+      "estilos": [
+        "plano",
+        "cartoon",
+        "documental"
+      ],
+      "origen": "codigo"
+    },
+    {
+      "id": "jubilado",
+      "tipo": "personaje",
+      "nombre": "Jubilado",
+      "etiquetas": [
+        "jubilado",
+        "abuelo",
+        "pasivo",
+        "anciano",
+        "pensión",
+        "BPS"
+      ],
+      "acciones": [
+        "reposo",
+        "hablar",
+        "senalar",
+        "caminar",
+        "sorprenderse",
+        "enojarse",
+        "festejar",
+        "pensar",
+        "encogerse",
+        "contar_plata",
+        "votar",
+        "saludar",
+        "preocuparse"
+      ],
+      "estilos": [
+        "plano",
+        "cartoon",
+        "documental"
+      ],
+      "origen": "codigo"
+    },
+    {
+      "id": "trabajadora",
+      "tipo": "personaje",
+      "nombre": "Trabajadora",
+      "etiquetas": [
+        "trabajadora",
+        "obrera",
+        "sueldo",
+        "salario",
+        "empleada",
+        "construcción"
+      ],
+      "acciones": [
+        "reposo",
+        "hablar",
+        "senalar",
+        "caminar",
+        "sorprenderse",
+        "enojarse",
+        "festejar",
+        "pensar",
+        "encogerse",
+        "contar_plata",
+        "votar",
+        "saludar",
+        "preocuparse"
+      ],
+      "estilos": [
+        "plano",
+        "cartoon",
+        "documental"
+      ],
+      "origen": "codigo"
+    },
+    {
+      "id": "estudiante",
+      "tipo": "personaje",
+      "nombre": "Estudiante",
+      "etiquetas": [
+        "estudiante",
+        "joven",
+        "liceal",
+        "universitario",
+        "chiquilín"
+      ],
+      "acciones": [
+        "reposo",
+        "hablar",
+        "senalar",
+        "caminar",
+        "sorprenderse",
+        "enojarse",
+        "festejar",
+        "pensar",
+        "encogerse",
+        "contar_plata",
+        "votar",
+        "saludar",
+        "preocuparse"
+      ],
+      "estilos": [
+        "plano",
+        "cartoon",
+        "documental"
+      ],
+      "origen": "codigo"
+    },
+    {
+      "id": "politico",
+      "tipo": "personaje",
+      "nombre": "Político genérico",
+      "etiquetas": [
+        "político",
+        "legislador",
+        "diputado",
+        "senador",
+        "ministro",
+        "gobierno"
+      ],
+      "acciones": [
+        "reposo",
+        "hablar",
+        "senalar",
+        "caminar",
+        "sorprenderse",
+        "enojarse",
+        "festejar",
+        "pensar",
+        "encogerse",
+        "contar_plata",
+        "votar",
+        "saludar",
+        "preocuparse"
+      ],
+      "estilos": [
+        "plano",
+        "cartoon",
+        "documental"
+      ],
+      "origen": "codigo"
+    },
+    {
+      "id": "periodista",
+      "tipo": "personaje",
+      "nombre": "Periodista",
+      "etiquetas": [
+        "periodista",
+        "prensa",
+        "medios",
+        "noticia",
+        "conductora"
+      ],
+      "acciones": [
+        "reposo",
+        "hablar",
+        "senalar",
+        "caminar",
+        "sorprenderse",
+        "enojarse",
+        "festejar",
+        "pensar",
+        "encogerse",
+        "contar_plata",
+        "votar",
+        "saludar",
+        "preocuparse"
+      ],
+      "estilos": [
+        "plano",
+        "cartoon",
+        "documental"
+      ],
+      "origen": "codigo"
+    },
+    {
+      "id": "medica",
+      "tipo": "personaje",
+      "nombre": "Médica",
+      "etiquetas": [
+        "médica",
+        "doctora",
+        "salud",
+        "hospital",
+        "mutualista"
+      ],
+      "acciones": [
+        "reposo",
+        "hablar",
+        "senalar",
+        "caminar",
+        "sorprenderse",
+        "enojarse",
+        "festejar",
+        "pensar",
+        "encogerse",
+        "contar_plata",
+        "votar",
+        "saludar",
+        "preocuparse"
+      ],
+      "estilos": [
+        "plano",
+        "cartoon",
+        "documental"
+      ],
+      "origen": "codigo"
+    },
+    {
+      "id": "policia",
+      "tipo": "personaje",
+      "nombre": "Policía",
+      "etiquetas": [
+        "policía",
+        "seguridad",
+        "delito",
+        "ministerio del interior"
+      ],
+      "acciones": [
+        "reposo",
+        "hablar",
+        "senalar",
+        "caminar",
+        "sorprenderse",
+        "enojarse",
+        "festejar",
+        "pensar",
+        "encogerse",
+        "contar_plata",
+        "votar",
+        "saludar",
+        "preocuparse"
+      ],
+      "estilos": [
+        "plano",
+        "cartoon",
+        "documental"
+      ],
+      "origen": "codigo"
+    },
+    {
+      "id": "docente",
+      "tipo": "personaje",
+      "nombre": "Docente",
+      "etiquetas": [
+        "docente",
+        "maestra",
+        "profesora",
+        "educación",
+        "escuela"
+      ],
+      "acciones": [
+        "reposo",
+        "hablar",
+        "senalar",
+        "caminar",
+        "sorprenderse",
+        "enojarse",
+        "festejar",
+        "pensar",
+        "encogerse",
+        "contar_plata",
+        "votar",
+        "saludar",
+        "preocuparse"
+      ],
+      "estilos": [
+        "plano",
+        "cartoon",
+        "documental"
+      ],
+      "origen": "codigo"
+    },
+    {
+      "id": "billete",
+      "tipo": "objeto",
+      "nombre": "Billete",
+      "etiquetas": [
+        "billete",
+        "plata",
+        "dinero",
+        "pesos",
+        "sueldo",
+        "pago"
+      ],
+      "acciones": [
+        "quieto",
+        "entrar",
+        "caer",
+        "flotar",
+        "rebotar",
+        "latir",
+        "volar",
+        "temblar",
+        "girar",
+        "salir"
+      ],
+      "estilos": [
+        "plano",
+        "cartoon",
+        "documental"
+      ],
+      "origen": "codigo"
+    },
+    {
+      "id": "moneda",
+      "tipo": "objeto",
+      "nombre": "Moneda",
+      "etiquetas": [
+        "moneda",
+        "plata",
+        "ahorro",
+        "peso"
+      ],
+      "acciones": [
+        "girar_moneda",
+        "quieto",
+        "entrar",
+        "caer",
+        "flotar",
+        "rebotar",
+        "latir",
+        "volar",
+        "temblar",
+        "girar",
+        "salir"
+      ],
+      "estilos": [
+        "plano",
+        "cartoon",
+        "documental"
+      ],
+      "origen": "codigo"
+    },
+    {
+      "id": "pila_monedas",
+      "tipo": "objeto",
+      "nombre": "Pila de monedas",
+      "etiquetas": [
+        "monedas",
+        "ahorro",
+        "fondo",
+        "acumular",
+        "aportes"
+      ],
+      "acciones": [
+        "apilarse",
+        "quieto",
+        "entrar",
+        "caer",
+        "flotar",
+        "rebotar",
+        "latir",
+        "volar",
+        "temblar",
+        "girar",
+        "salir"
+      ],
+      "estilos": [
+        "plano",
+        "cartoon",
+        "documental"
+      ],
+      "origen": "codigo"
+    },
+    {
+      "id": "alcancia",
+      "tipo": "objeto",
+      "nombre": "Alcancía",
+      "etiquetas": [
+        "alcancía",
+        "chanchito",
+        "ahorro",
+        "fondo",
+        "jubilación",
+        "AFAP"
+      ],
+      "acciones": [
+        "llenarse",
+        "romperse",
+        "quieto",
+        "entrar",
+        "caer",
+        "flotar",
+        "rebotar",
+        "latir",
+        "volar",
+        "temblar",
+        "girar",
+        "salir"
+      ],
+      "estilos": [
+        "plano",
+        "cartoon",
+        "documental"
+      ],
+      "origen": "codigo"
+    },
+    {
+      "id": "maletin",
+      "tipo": "objeto",
+      "nombre": "Maletín",
+      "etiquetas": [
+        "maletín",
+        "empresa",
+        "negocio",
+        "plata",
+        "corrupción",
+        "ejecutivo"
+      ],
+      "acciones": [
+        "abrirse",
+        "quieto",
+        "entrar",
+        "caer",
+        "flotar",
+        "rebotar",
+        "latir",
+        "volar",
+        "temblar",
+        "girar",
+        "salir"
+      ],
+      "estilos": [
+        "plano",
+        "cartoon",
+        "documental"
+      ],
+      "origen": "codigo"
+    },
+    {
+      "id": "balanza",
+      "tipo": "objeto",
+      "nombre": "Balanza",
+      "etiquetas": [
+        "balanza",
+        "justicia",
+        "equilibrio",
+        "comparar",
+        "ley"
+      ],
+      "acciones": [
+        "inclinarse",
+        "equilibrar",
+        "quieto",
+        "entrar",
+        "caer",
+        "flotar",
+        "rebotar",
+        "latir",
+        "volar",
+        "temblar",
+        "girar",
+        "salir"
+      ],
+      "estilos": [
+        "plano",
+        "cartoon",
+        "documental"
+      ],
+      "origen": "codigo"
+    },
+    {
+      "id": "urna",
+      "tipo": "objeto",
+      "nombre": "Urna",
+      "etiquetas": [
+        "urna",
+        "elecciones",
+        "votación",
+        "balotaje",
+        "plebiscito",
+        "democracia"
+      ],
+      "acciones": [
+        "recibir_voto",
+        "quieto",
+        "entrar",
+        "caer",
+        "flotar",
+        "rebotar",
+        "latir",
+        "volar",
+        "temblar",
+        "girar",
+        "salir"
+      ],
+      "estilos": [
+        "plano",
+        "cartoon",
+        "documental"
+      ],
+      "origen": "codigo"
+    },
+    {
+      "id": "voto",
+      "tipo": "objeto",
+      "nombre": "Voto (sobre)",
+      "etiquetas": [
+        "voto",
+        "sobre",
+        "papeleta",
+        "lista",
+        "elección"
+      ],
+      "acciones": [
+        "quieto",
+        "entrar",
+        "caer",
+        "flotar",
+        "rebotar",
+        "latir",
+        "volar",
+        "temblar",
+        "girar",
+        "salir"
+      ],
+      "estilos": [
+        "plano",
+        "cartoon",
+        "documental"
+      ],
+      "origen": "codigo"
+    },
+    {
+      "id": "documento",
+      "tipo": "objeto",
+      "nombre": "Documento con sello",
+      "etiquetas": [
+        "documento",
+        "ley",
+        "trámite",
+        "contrato",
+        "decreto",
+        "firma",
+        "aprobado"
+      ],
+      "acciones": [
+        "sellar",
+        "quieto",
+        "entrar",
+        "caer",
+        "flotar",
+        "rebotar",
+        "latir",
+        "volar",
+        "temblar",
+        "girar",
+        "salir"
+      ],
+      "estilos": [
+        "plano",
+        "cartoon",
+        "documental"
+      ],
+      "origen": "codigo"
+    },
+    {
+      "id": "candado",
+      "tipo": "objeto",
+      "nombre": "Candado",
+      "etiquetas": [
+        "candado",
+        "seguridad",
+        "bloqueo",
+        "cerrado",
+        "prohibido",
+        "privacidad"
+      ],
+      "acciones": [
+        "cerrar",
+        "abrir",
+        "quieto",
+        "entrar",
+        "caer",
+        "flotar",
+        "rebotar",
+        "latir",
+        "volar",
+        "temblar",
+        "girar",
+        "salir"
+      ],
+      "estilos": [
+        "plano",
+        "cartoon",
+        "documental"
+      ],
+      "origen": "codigo"
+    },
+    {
+      "id": "megafono",
+      "tipo": "objeto",
+      "nombre": "Megáfono",
+      "etiquetas": [
+        "megáfono",
+        "anuncio",
+        "protesta",
+        "reclamo",
+        "sindicato",
+        "paro"
+      ],
+      "acciones": [
+        "gritar",
+        "quieto",
+        "entrar",
+        "caer",
+        "flotar",
+        "rebotar",
+        "latir",
+        "volar",
+        "temblar",
+        "girar",
+        "salir"
+      ],
+      "estilos": [
+        "plano",
+        "cartoon",
+        "documental"
+      ],
+      "origen": "codigo"
+    },
+    {
+      "id": "bandera",
+      "tipo": "objeto",
+      "nombre": "Bandera genérica",
+      "etiquetas": [
+        "bandera",
+        "país",
+        "patria",
+        "nación"
+      ],
+      "acciones": [
+        "flamear",
+        "quieto",
+        "entrar",
+        "caer",
+        "flotar",
+        "rebotar",
+        "latir",
+        "volar",
+        "temblar",
+        "girar",
+        "salir"
+      ],
+      "estilos": [
+        "plano",
+        "cartoon",
+        "documental"
+      ],
+      "origen": "codigo"
+    },
+    {
+      "id": "lupa",
+      "tipo": "objeto",
+      "nombre": "Lupa",
+      "etiquetas": [
+        "lupa",
+        "investigar",
+        "buscar",
+        "analizar",
+        "auditoría",
+        "detalle"
+      ],
+      "acciones": [
+        "buscar",
+        "quieto",
+        "entrar",
+        "caer",
+        "flotar",
+        "rebotar",
+        "latir",
+        "volar",
+        "temblar",
+        "girar",
+        "salir"
+      ],
+      "estilos": [
+        "plano",
+        "cartoon",
+        "documental"
+      ],
+      "origen": "codigo"
+    },
+    {
+      "id": "pizarron",
+      "tipo": "objeto",
+      "nombre": "Pizarrón con gráfico",
+      "etiquetas": [
+        "gráfico",
+        "pizarrón",
+        "estadística",
+        "sube",
+        "baja",
+        "rentabilidad",
+        "inflación"
+      ],
+      "acciones": [
+        "subir",
+        "bajar",
+        "quieto",
+        "entrar",
+        "caer",
+        "flotar",
+        "rebotar",
+        "latir",
+        "volar",
+        "temblar",
+        "girar",
+        "salir"
+      ],
+      "estilos": [
+        "plano",
+        "cartoon",
+        "documental"
+      ],
+      "origen": "codigo"
+    },
+    {
+      "id": "chancleta",
+      "tipo": "objeto",
+      "nombre": "Chancleta",
+      "etiquetas": [
+        "chancleta",
+        "ojota",
+        "reto",
+        "castigo",
+        "abuela",
+        "verano"
+      ],
+      "acciones": [
+        "golpe",
+        "quieto",
+        "entrar",
+        "caer",
+        "flotar",
+        "rebotar",
+        "latir",
+        "volar",
+        "temblar",
+        "girar",
+        "salir"
+      ],
+      "estilos": [
+        "plano",
+        "cartoon",
+        "documental"
+      ],
+      "origen": "codigo"
+    },
+    {
+      "id": "termo",
+      "tipo": "objeto",
+      "nombre": "Termo",
+      "etiquetas": [
+        "termo",
+        "mate",
+        "uruguayo",
+        "rambla",
+        "costumbre"
+      ],
+      "acciones": [
+        "quieto",
+        "entrar",
+        "caer",
+        "flotar",
+        "rebotar",
+        "latir",
+        "volar",
+        "temblar",
+        "girar",
+        "salir"
+      ],
+      "estilos": [
+        "plano",
+        "cartoon",
+        "documental"
+      ],
+      "origen": "codigo"
+    },
+    {
+      "id": "mate",
+      "tipo": "objeto",
+      "nombre": "Mate",
+      "etiquetas": [
+        "mate",
+        "yerba",
+        "uruguayo",
+        "charla",
+        "costumbre"
+      ],
+      "acciones": [
+        "humear",
+        "quieto",
+        "entrar",
+        "caer",
+        "flotar",
+        "rebotar",
+        "latir",
+        "volar",
+        "temblar",
+        "girar",
+        "salir"
+      ],
+      "estilos": [
+        "plano",
+        "cartoon",
+        "documental"
+      ],
+      "origen": "codigo"
+    },
+    {
+      "id": "celular",
+      "tipo": "objeto",
+      "nombre": "Celular",
+      "etiquetas": [
+        "celular",
+        "teléfono",
+        "redes",
+        "app",
+        "mensaje",
+        "notificación",
+        "internet"
+      ],
+      "acciones": [
+        "notificacion",
+        "quieto",
+        "entrar",
+        "caer",
+        "flotar",
+        "rebotar",
+        "latir",
+        "volar",
+        "temblar",
+        "girar",
+        "salir"
+      ],
+      "estilos": [
+        "plano",
+        "cartoon",
+        "documental"
+      ],
+      "origen": "codigo"
+    },
+    {
+      "id": "calendario",
+      "tipo": "objeto",
+      "nombre": "Calendario",
+      "etiquetas": [
+        "calendario",
+        "fecha",
+        "plazo",
+        "días",
+        "tiempo",
+        "vencimiento"
+      ],
+      "acciones": [
+        "pasar_hojas",
+        "quieto",
+        "entrar",
+        "caer",
+        "flotar",
+        "rebotar",
+        "latir",
+        "volar",
+        "temblar",
+        "girar",
+        "salir"
+      ],
+      "estilos": [
+        "plano",
+        "cartoon",
+        "documental"
+      ],
+      "origen": "codigo"
+    },
+    {
+      "id": "reloj",
+      "tipo": "objeto",
+      "nombre": "Reloj",
+      "etiquetas": [
+        "reloj",
+        "tiempo",
+        "hora",
+        "espera",
+        "años",
+        "demora"
+      ],
+      "acciones": [
+        "correr",
+        "quieto",
+        "entrar",
+        "caer",
+        "flotar",
+        "rebotar",
+        "latir",
+        "volar",
+        "temblar",
+        "girar",
+        "salir"
+      ],
+      "estilos": [
+        "plano",
+        "cartoon",
+        "documental"
+      ],
+      "origen": "codigo"
+    },
+    {
+      "id": "carrito",
+      "tipo": "objeto",
+      "nombre": "Carrito de súper",
+      "etiquetas": [
+        "supermercado",
+        "compras",
+        "precios",
+        "inflación",
+        "canasta",
+        "consumo"
+      ],
+      "acciones": [
+        "andar",
+        "llenarse",
+        "quieto",
+        "entrar",
+        "caer",
+        "flotar",
+        "rebotar",
+        "latir",
+        "volar",
+        "temblar",
+        "girar",
+        "salir"
+      ],
+      "estilos": [
+        "plano",
+        "cartoon",
+        "documental"
+      ],
+      "origen": "codigo"
+    },
+    {
+      "id": "auto",
+      "tipo": "objeto",
+      "nombre": "Auto",
+      "etiquetas": [
+        "auto",
+        "coche",
+        "tránsito",
+        "combustible",
+        "nafta",
+        "viaje"
+      ],
+      "acciones": [
+        "andar",
+        "quieto",
+        "entrar",
+        "caer",
+        "flotar",
+        "rebotar",
+        "latir",
+        "volar",
+        "temblar",
+        "girar",
+        "salir"
+      ],
+      "estilos": [
+        "plano",
+        "cartoon",
+        "documental"
+      ],
+      "origen": "codigo"
+    },
+    {
+      "id": "omnibus",
+      "tipo": "objeto",
+      "nombre": "Ómnibus",
+      "etiquetas": [
+        "ómnibus",
+        "bondi",
+        "transporte",
+        "boleto",
+        "pasajeros"
+      ],
+      "acciones": [
+        "andar",
+        "parar",
+        "quieto",
+        "entrar",
+        "caer",
+        "flotar",
+        "rebotar",
+        "latir",
+        "volar",
+        "temblar",
+        "girar",
+        "salir"
+      ],
+      "estilos": [
+        "plano",
+        "cartoon",
+        "documental"
+      ],
+      "origen": "codigo"
+    },
+    {
+      "id": "casa",
+      "tipo": "objeto",
+      "nombre": "Casa",
+      "etiquetas": [
+        "casa",
+        "vivienda",
+        "hogar",
+        "alquiler",
+        "familia",
+        "barrio"
+      ],
+      "acciones": [
+        "luces",
+        "quieto",
+        "entrar",
+        "caer",
+        "flotar",
+        "rebotar",
+        "latir",
+        "volar",
+        "temblar",
+        "girar",
+        "salir"
+      ],
+      "estilos": [
+        "plano",
+        "cartoon",
+        "documental"
+      ],
+      "origen": "codigo"
+    },
+    {
+      "id": "edificio",
+      "tipo": "objeto",
+      "nombre": "Edificio de oficinas",
+      "etiquetas": [
+        "edificio",
+        "oficinas",
+        "empresa",
+        "banco",
+        "AFAP",
+        "institución"
+      ],
+      "acciones": [
+        "luces",
+        "quieto",
+        "entrar",
+        "caer",
+        "flotar",
+        "rebotar",
+        "latir",
+        "volar",
+        "temblar",
+        "girar",
+        "salir"
+      ],
+      "estilos": [
+        "plano",
+        "cartoon",
+        "documental"
+      ],
+      "origen": "codigo"
+    },
+    {
+      "id": "ciudad_dia",
+      "tipo": "escenario",
+      "nombre": "Ciudad de día",
+      "etiquetas": [
+        "ciudad",
+        "centro",
+        "calle",
+        "Montevideo",
+        "tránsito",
+        "día"
+      ],
+      "acciones": [
+        "nubes",
+        "sol",
+        "autos"
+      ],
+      "estilos": [
+        "plano",
+        "cartoon",
+        "documental"
+      ],
+      "origen": "codigo"
+    },
+    {
+      "id": "ciudad_noche",
+      "tipo": "escenario",
+      "nombre": "Ciudad de noche",
+      "etiquetas": [
+        "ciudad",
+        "noche",
+        "inseguridad",
+        "calle",
+        "luces"
+      ],
+      "acciones": [
+        "estrellas",
+        "ventanas que titilan",
+        "autos con luces"
+      ],
+      "estilos": [
+        "plano",
+        "cartoon",
+        "documental"
+      ],
+      "origen": "codigo"
+    },
+    {
+      "id": "rambla",
+      "tipo": "escenario",
+      "nombre": "Rambla con mar",
+      "etiquetas": [
+        "rambla",
+        "mar",
+        "playa",
+        "costa",
+        "verano",
+        "Montevideo"
+      ],
+      "acciones": [
+        "olas",
+        "gaviotas",
+        "nubes"
+      ],
+      "estilos": [
+        "plano",
+        "cartoon",
+        "documental"
+      ],
+      "origen": "codigo"
+    },
+    {
+      "id": "campo",
+      "tipo": "escenario",
+      "nombre": "Campo con vacas",
+      "etiquetas": [
+        "campo",
+        "vacas",
+        "rural",
+        "agro",
+        "ganadería",
+        "interior",
+        "productores"
+      ],
+      "acciones": [
+        "vacas",
+        "molino",
+        "pasto",
+        "nubes"
+      ],
+      "estilos": [
+        "plano",
+        "cartoon",
+        "documental"
+      ],
+      "origen": "codigo"
+    },
+    {
+      "id": "barrio",
+      "tipo": "escenario",
+      "nombre": "Barrio",
+      "etiquetas": [
+        "barrio",
+        "casas",
+        "vecinos",
+        "vivienda",
+        "familia"
+      ],
+      "acciones": [
+        "gente caminando",
+        "árboles",
+        "cables"
+      ],
+      "estilos": [
+        "plano",
+        "cartoon",
+        "documental"
+      ],
+      "origen": "codigo"
+    },
+    {
+      "id": "parlamento",
+      "tipo": "escenario",
+      "nombre": "Parlamento genérico",
+      "etiquetas": [
+        "parlamento",
+        "legislativo",
+        "ley",
+        "votación",
+        "senado",
+        "diputados",
+        "gobierno"
+      ],
+      "acciones": [
+        "banderas",
+        "palomas",
+        "nubes"
+      ],
+      "estilos": [
+        "plano",
+        "cartoon",
+        "documental"
+      ],
+      "origen": "codigo"
+    },
+    {
+      "id": "oficina_publica",
+      "tipo": "escenario",
+      "nombre": "Oficina pública",
+      "etiquetas": [
+        "oficina",
+        "trámite",
+        "burocracia",
+        "BPS",
+        "ventanilla",
+        "Estado",
+        "atención"
+      ],
+      "acciones": [
+        "número de turno",
+        "reloj",
+        "nubes en la ventana",
+        "planta"
+      ],
+      "estilos": [
+        "plano",
+        "cartoon",
+        "documental"
+      ],
+      "origen": "codigo"
+    },
+    {
+      "id": "aula",
+      "tipo": "escenario",
+      "nombre": "Aula",
+      "etiquetas": [
+        "aula",
+        "escuela",
+        "liceo",
+        "clase",
+        "educación",
+        "explicar"
+      ],
+      "acciones": [
+        "pizarrón que se escribe",
+        "reloj",
+        "nubes"
+      ],
+      "estilos": [
+        "plano",
+        "cartoon",
+        "documental"
+      ],
+      "origen": "codigo"
+    },
+    {
+      "id": "lineas_velocidad",
+      "tipo": "efecto",
+      "nombre": "Líneas de velocidad",
+      "etiquetas": [
+        "rápido",
+        "velocidad",
+        "corre",
+        "apuro"
+      ],
+      "acciones": [],
+      "estilos": [
+        "plano",
+        "cartoon",
+        "documental"
+      ],
+      "origen": "codigo"
+    },
+    {
+      "id": "humo",
+      "tipo": "efecto",
+      "nombre": "Humo",
+      "etiquetas": [
+        "humo",
+        "se esfumó",
+        "desaparece",
+        "quemado",
+        "fuego"
+      ],
+      "acciones": [],
+      "estilos": [
+        "plano",
+        "cartoon",
+        "documental"
+      ],
+      "origen": "codigo"
+    },
+    {
+      "id": "chispas",
+      "tipo": "efecto",
+      "nombre": "Chispas",
+      "etiquetas": [
+        "chispas",
+        "idea",
+        "brillo",
+        "logro",
+        "impacto"
+      ],
+      "acciones": [],
+      "estilos": [
+        "plano",
+        "cartoon",
+        "documental"
+      ],
+      "origen": "codigo"
+    },
+    {
+      "id": "explosion",
+      "tipo": "efecto",
+      "nombre": "Explosión cómica",
+      "etiquetas": [
+        "explosión",
+        "pum",
+        "escándalo",
+        "bomba",
+        "estalla"
+      ],
+      "acciones": [],
+      "estilos": [
+        "plano",
+        "cartoon",
+        "documental"
+      ],
+      "origen": "codigo"
+    },
+    {
+      "id": "pregunta",
+      "tipo": "efecto",
+      "nombre": "Signo de pregunta",
+      "etiquetas": [
+        "duda",
+        "pregunta",
+        "confusión",
+        "no entiende"
+      ],
+      "acciones": [],
+      "estilos": [
+        "plano",
+        "cartoon",
+        "documental"
+      ],
+      "origen": "codigo"
+    },
+    {
+      "id": "exclamacion",
+      "tipo": "efecto",
+      "nombre": "Signo de exclamación",
+      "etiquetas": [
+        "sorpresa",
+        "atención",
+        "alerta",
+        "importante"
+      ],
+      "acciones": [],
+      "estilos": [
+        "plano",
+        "cartoon",
+        "documental"
+      ],
+      "origen": "codigo"
+    },
+    {
+      "id": "sudor",
+      "tipo": "efecto",
+      "nombre": "Gotas de sudor",
+      "etiquetas": [
+        "nervios",
+        "sudor",
+        "presión",
+        "calor",
+        "apuro"
+      ],
+      "acciones": [],
+      "estilos": [
+        "plano",
+        "cartoon",
+        "documental"
+      ],
+      "origen": "codigo"
+    },
+    {
+      "id": "corazones",
+      "tipo": "efecto",
+      "nombre": "Corazones",
+      "etiquetas": [
+        "amor",
+        "me gusta",
+        "corazón",
+        "feliz"
+      ],
+      "acciones": [],
+      "estilos": [
+        "plano",
+        "cartoon",
+        "documental"
+      ],
+      "origen": "codigo"
+    },
+    {
+      "id": "rayos_enojo",
+      "tipo": "efecto",
+      "nombre": "Rayos de enojo",
+      "etiquetas": [
+        "enojo",
+        "bronca",
+        "furia",
+        "calentura"
+      ],
+      "acciones": [],
+      "estilos": [
+        "plano",
+        "cartoon",
+        "documental"
+      ],
+      "origen": "codigo"
+    },
+    {
+      "id": "flecha",
+      "tipo": "efecto",
+      "nombre": "Flecha que se dibuja",
+      "etiquetas": [
+        "flecha",
+        "señalar",
+        "mirá",
+        "sube",
+        "crece"
+      ],
+      "acciones": [],
+      "estilos": [
+        "plano",
+        "cartoon",
+        "documental"
+      ],
+      "origen": "codigo"
+    }
+  ]
+}
